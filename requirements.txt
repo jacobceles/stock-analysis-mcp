@@ -5,3 +5,5 @@ ta
 google-generativeai
 google-adk
 praw
+matplotlib
+plotly

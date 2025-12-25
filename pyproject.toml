@@ -1,0 +1,43 @@
+[project]   
+name = "adk-stock-analysis-agent"
+version = "0.1.0"
+description = "Google ADK-based stock analysis"
+readme = "README.md"
+requires-python = ">=3.10"
+
+dependencies = [
+    "fastmcp",
+    "requests",
+    "pandas",
+    "ta",
+    "google-generativeai",
+    "google-adk",
+    "praw",
+    "matplotlib",
+    "litellm",
+    "plotly",
+]
+
+[project.optional-dependencies]
+dev = [
+    "black",
+    "ruff",
+    "mypy",
+    "pytest",
+]
+
+[tool.black]
+line-length = 120
+target-version = ["py310"]
+
+[tool.ruff]
+line-length = 120
+select = ["E", "F", "I", "B"]
+ignore = ["E203", "E501"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+
+[tool.uv]
+package = false

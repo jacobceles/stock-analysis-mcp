@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  mcp:
+    build:
+      context: .
+      dockerfile: mcp.dockerfile
+    environment:
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+      - REDDIT_CLIENT_ID=${REDDIT_CLIENT_ID}
+      - REDDIT_CLIENT_SECRET=${REDDIT_CLIENT_SECRET}
+      - REDDIT_USER_AGENT=${REDDIT_USER_AGENT}
+    ports:
+      - "8000:8000"
+
+  adk:
+    build:
+      context: .
+      dockerfile: adk.dockerfile
+    environment:
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+      - REDDIT_CLIENT_ID=${REDDIT_CLIENT_ID}
+      - REDDIT_CLIENT_SECRET=${REDDIT_CLIENT_SECRET}
+      - REDDIT_USER_AGENT=${REDDIT_USER_AGENT}
+      - LITE_LLM_MODEL=${LITE_LLM_MODEL}
+      - LITE_LLM_API_KEY=${LITE_LLM_API_KEY}
+      - MCP_URL=http://mcp:8000/sse
+    ports:
+      - "8080:8080"
+    depends_on:
+      - mcp

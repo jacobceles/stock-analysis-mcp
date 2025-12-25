@@ -18,6 +18,8 @@ This project provides a MCP (Model Context Protocol) server that uses data from 
     REDDIT_CLIENT_ID=your_reddit_client_id
     REDDIT_CLIENT_SECRET=your_reddit_client_secret
     REDDIT_USER_AGENT=stock-analysis-mcp/1.0
+    LITE_LLM_MODEL=llm_model_name
+    LITE_LLM_API_KEY=llm_api_key
     ```
     
     To get Reddit API credentials:
@@ -36,6 +38,10 @@ This project provides a MCP (Model Context Protocol) server that uses data from 
 
     ```bash
     docker-compose up --build
+
+    or
+
+    docker-compose -f docker-compose_1.yml up --build
     ```
 
 This will start both the `nseindia` and `mcp` services. The `mcp` service will be available on port `8000`.

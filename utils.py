@@ -1,5 +1,6 @@
 import os
 import requests
+from datetime import datetime
 import pandas as pd
 import praw
 from ta.trend import (
@@ -21,13 +22,16 @@ from ta.volume import (
 )
 
 from constants import (
-    NSE_HOST_URL,
-    HISTORICAL_ENDPOINT,
-    METADATA_ENDPOINT,
     DUMP_DIR,
     REDDIT_SUBREDDITS,
     REDDIT_POST_LIMIT,
 )
+from nse_client import default_client
+
+def get_equity_metadata(symbol: str) -> dict:
+    # Use the default client to fetch metadata
+    response_json = default_client.get_metadata(symbol)
+    return response_json.get("metadata", {})
 
 
 def get_data(symbol, start_date, end_date):
@@ -37,30 +41,14 @@ def get_data(symbol, start_date, end_date):
         file_path = os.path.join(DUMP_DIR, file_name)
         df = pd.read_csv(file_path)
     else:
-        df = get_historical_data(symbol, start_date, end_date)
+        response = default_client.get_historical(symbol, start_date, end_date)
+        merged_data = []
+        merged_data.extend(response)
+        df = pd.DataFrame(merged_data)
+        file_name = f"{symbol}_{start_date}_{end_date}.csv"
+        file_path = os.path.join(DUMP_DIR, file_name)
+        df.to_csv(file_path, index=False)
     return df
-
-
-def get_equity_metadata(symbol: str) -> dict:
-    response = requests.get(NSE_HOST_URL + METADATA_ENDPOINT.format(symbol=symbol))
-    print(response.json()["metadata"])
-    return response.json()["metadata"]
-
-
-def get_historical_data(symbol: str, start_date: str, end_date: str) -> pd.DataFrame:
-    response = requests.get(
-        NSE_HOST_URL + HISTORICAL_ENDPOINT.format(symbol=symbol),
-        params={"dateStart": start_date, "dateEnd": end_date},
-    )
-    merged_data = []
-    for data in response.json():
-        merged_data.extend(data["data"])
-
-    df = pd.DataFrame(merged_data)
-    file_name = f"{symbol}_{start_date}_{end_date}.csv"
-    file_path = os.path.join(DUMP_DIR, file_name)
-    df.to_csv(file_path, index=False)
-    return merged_data
 
 
 def get_macd(symbol: str, start_date: str, end_date: str) -> list[float]:

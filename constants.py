@@ -1,8 +1,8 @@
-NSE_HOST_URL = "http://nseindia:3001"
-HISTORICAL_ENDPOINT = "/api/equity/historical/{symbol}"
-METADATA_ENDPOINT = "/api/equity/{symbol}"
+NSE_HOST_URL = "https://www.nseindia.com"
+METADATA_ENDPOINT = "/api/quote-equity"
+HISTORICAL_ENDPOINT = "/api/historicalOR/generateSecurityWiseHistoricalData"
 
-DUMP_DIR = "./data"
+DUMP_DIR = "./agent/data"
 
 REDDIT_SUBREDDITS = ["IndianStockMarket", "IndianStreetBets", "StockMarketIndia"]
 REDDIT_POST_LIMIT = 30

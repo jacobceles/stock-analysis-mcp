@@ -1,9 +1,13 @@
 import datetime
-from google.adk.agents import LlmAgent, LoopAgent
-from google.adk.tools.mcp_tool.mcp_toolset import MCPToolset
+import os
+
+from google.adk.agents import LlmAgent
+from google.adk.models.lite_llm import LiteLlm
 from google.adk.tools.mcp_tool import SseConnectionParams
+from google.adk.tools.mcp_tool.mcp_toolset import MCPToolset
 from google.adk.tools.tool_context import ToolContext
 
+from agent.tools import generate_plot, generate_plot_data_agent
 
 # --- State Keys ---
 STATE_TA = "technical_analysis"
@@ -22,36 +26,35 @@ def exit_loop(tool_context: ToolContext):
 
 mcp_toolset = MCPToolset(
     connection_params=SseConnectionParams(
-        url="http://127.0.0.1:8000/sse",
+        url=os.environ.get("MCP_URL", "")
     )
 )
 
 today_date = datetime.datetime.now().strftime("%A, %d %B %Y")
 
 ta_agent = LlmAgent(
-    model="gemini-2.0-flash",
     name="stock_ta_assistant",
+    model=LiteLlm(
+        model=os.environ.get("LITE_LLM_MODEL", ""),
+        api_key=os.environ.get("LITE_LLM_API_KEY", ""),
+    ),
     instruction=f"""
     You are an agent that helps to perform technical analysis for Indian stocks. The user will provide you the stock symbol from NSE.
     You have to use the given tools to perform technical analysis and provide sound information to the user. 
     You can also fetch recent stock-related news and discussions from Reddit.
+    You can also plot ONLY A SINGLE series line graphs.
+    While performing analysis try to plot relevant graphs for each of the indicators to support your analysis.
     You have to decide whether to BUY or SELL stock and at what price should the action to be taken.
     This action will then executed inside a simulated enviroment to evaluate your capabilities.
+
+    While generating plots, STRICTLY ensure you follow these workflow:
+    1. Call the `generate_plot_data_agent` tool with valid data.
+    2. Call the `generate_plot` tool with the output from previous step to generate and save the plot as an artifact.
+
     Today's date is {today_date}.
     """,
-    tools=[mcp_toolset],
+    tools=[mcp_toolset, generate_plot_data_agent, generate_plot],
     output_key=STATE_TA,
 )
 
-eval_agent = LlmAgent(
-    model="gemini-2.0-flash",
-    name="eval_agent",
-    instruction="""
-    You are an agent that evaluates the analysis performed on stock by another agent, if the analysis is sufficient and the accurate, 
-    then You MUST call the 'exit_loop' function. Do not output any text. Else (the critique contains actionable feedback)
-    Carefully apply the suggestions.
-    """,
-    tools=[exit_loop],
-)
-
-root_agent = LoopAgent(name="OrchestratorAgent", sub_agents=[ta_agent, eval_agent], max_iterations=5)
+root_agent = ta_agent

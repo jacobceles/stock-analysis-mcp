@@ -1,7 +1,10 @@
+from typing import Any
+from starlette.requests import Request
+from starlette.responses import Response, JSONResponse
 from fastmcp import FastMCP
 
 from utils import (
-    get_historical_data,
+    get_data,
     get_equity_metadata,
     get_macd,
     get_rsi,
@@ -21,6 +24,9 @@ from utils import (
 # Create a server instance
 mcp = FastMCP(name="NSE stock Analysis Server")
 
+@mcp.custom_route("/health", methods=["GET"])
+async def health_check(request: Request) -> Response:
+    return JSONResponse({"status": "ok"})
 
 @mcp.tool
 def perform_calculation(equation: str) -> float:
@@ -35,7 +41,7 @@ def perform_calculation(equation: str) -> float:
 
 
 @mcp.tool
-def get_stock_metadata_tool(symbol: str) -> list[float]:
+def get_stock_metadata_tool(symbol: str) -> any:
     """
     Gets general information about the stock like PE ratio, sector etc
 
@@ -46,7 +52,7 @@ def get_stock_metadata_tool(symbol: str) -> list[float]:
 
 
 @mcp.tool
-def get_equity_data(symbol: str, start_date: str, end_date: str) -> list[dict]:
+def get_equity_data(symbol: str, start_date: str, end_date: str) -> any:
     """
     Gets the historical data for the given stock based on the dates provided
 
@@ -55,7 +61,7 @@ def get_equity_data(symbol: str, start_date: str, end_date: str) -> list[dict]:
     start_date: the start date of the range, should be in YYYY-MM-DD
     end_date: the end date of the range, should be in YYYY-MM-DD
     """
-    return get_historical_data(symbol, start_date, end_date)
+    return get_data(symbol, start_date, end_date).values.tolist()
 
 
 # Tools for momentum - MACD, ROC, RSI and Stochastic Oscillator (SR)
