@@ -1,0 +1,68 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Setup Environment",
+            "type": "shell",
+            "command": "uv sync --all-packages && if [ -d .git ]; then uv run pre-commit install; fi",
+            "problemMatcher": [],
+            "group": "build"
+        },
+        {
+            "label": "Format Code",
+            "type": "shell",
+            "command": "uv run ruff format",
+            "problemMatcher": [],
+            "group": "build"
+        },
+        {
+            "label": "Lint Code (Ruff)",
+            "type": "shell",
+            "command": "uv run ruff check --fix",
+            "problemMatcher": [],
+            "group": "build"
+        },
+        {
+            "label": "Typecheck (Mypy & Pyrefly)",
+            "type": "shell",
+            "command": "uv run mypy . && uv run pyrefly check .",
+            "problemMatcher": [],
+            "group": "build"
+        },
+        {
+            "label": "Run Tests",
+            "type": "shell",
+            "command": "uv run pytest",
+            "problemMatcher": [],
+            "group": "build"
+        },
+        {
+            "label": "Docker: Build Images",
+            "type": "shell",
+            "command": "docker compose build",
+            "problemMatcher": [],
+            "group": "build"
+        },
+        {
+            "label": "Docker: Start Services",
+            "type": "shell",
+            "command": "docker compose up -d",
+            "problemMatcher": [],
+            "group": "build"
+        },
+        {
+            "label": "Docker: Stop Services",
+            "type": "shell",
+            "command": "docker compose down",
+            "problemMatcher": [],
+            "group": "build"
+        },
+        {
+            "label": "Docker: Tail Logs",
+            "type": "shell",
+            "command": "docker compose logs -f",
+            "problemMatcher": [],
+            "group": "build"
+        }
+    ]
+}

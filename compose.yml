@@ -1,10 +1,15 @@
 version: '3.8'
 
 services:
+  nseindia:
+    image: imcodeman/nseindia
+    ports:
+      - "3001:3001"
+
   mcp:
     build:
       context: .
-      dockerfile: mcp.dockerfile
+      dockerfile: docker/mcp.dockerfile
     environment:
       - GOOGLE_API_KEY=${GOOGLE_API_KEY}
       - REDDIT_CLIENT_ID=${REDDIT_CLIENT_ID}
@@ -12,11 +17,13 @@ services:
       - REDDIT_USER_AGENT=${REDDIT_USER_AGENT}
     ports:
       - "8000:8000"
+    depends_on:
+      - nseindia
 
   adk:
     build:
       context: .
-      dockerfile: adk.dockerfile
+      dockerfile: docker/adk.dockerfile
     environment:
       - GOOGLE_API_KEY=${GOOGLE_API_KEY}
       - REDDIT_CLIENT_ID=${REDDIT_CLIENT_ID}

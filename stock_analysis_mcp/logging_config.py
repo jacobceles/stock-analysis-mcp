@@ -20,11 +20,6 @@ def setup_logging() -> logging.Logger:
                 "levelname": "level",
                 "name": "logger",
             },
-            static_fields={
-                "service": "odp-webcrawlerhub-srv",
-                "environment": os.getenv("ENVIRONMENT_NAME", "unknown"),
-                "namespace": os.getenv("EKS_NAMESPACE", "unknown"),
-            },
             timestamp=True,
         )
     else:

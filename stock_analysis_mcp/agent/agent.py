@@ -10,8 +10,8 @@ from google.adk.tools.mcp_tool import SseConnectionParams
 from google.adk.tools.mcp_tool.mcp_toolset import MCPToolset
 from google.adk.tools.tool_context import ToolContext
 
-from agent.tools import generate_plot, generate_plot_data_agent
-from logging_config import setup_logging
+from stock_analysis_mcp.agent.tools import generate_plot, generate_plot_data_agent
+from stock_analysis_mcp.logging_config import setup_logging
 
 setup_logging()
 logger = logging.getLogger("agent")
