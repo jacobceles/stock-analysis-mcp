@@ -1,10 +1,16 @@
-[project]   
+# ===============================
+# Project metadata
+# ===============================
+[project]
 name = "adk-stock-analysis-agent"
 version = "0.1.0"
 description = "Google ADK-based stock analysis"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.14,<3.15"
 
+# ===============================
+# Dependencies
+# ===============================
 dependencies = [
     "fastmcp",
     "requests",
@@ -16,28 +22,70 @@ dependencies = [
     "matplotlib",
     "litellm",
     "plotly",
+    "colorlog>=6.10.1",
+    "python-json-logger>=4.0.0",
 ]
 
-[project.optional-dependencies]
+[dependency-groups]
 dev = [
-    "black",
-    "ruff",
-    "mypy",
-    "pytest",
+    "pytest>=9",
+    "pytest-asyncio>=1",
+    "ruff>=0",
+    "mypy>=1",
+    "pyrefly>0",
+    "pre-commit>=4",
+    "types-requests>=2.32.4.20260107",
+    "pandas-stubs>=3.0.0.260204",
 ]
 
-[tool.black]
-line-length = 120
-target-version = ["py310"]
-
-[tool.ruff]
-line-length = 120
-select = ["E", "F", "I", "B"]
-ignore = ["E203", "E501"]
-
-[tool.mypy]
-python_version = "3.12"
-strict = true
+# ===============================
+# Repository configuration for UV
+# ===============================
+[[tool.uv.index]]
+url = "https://pypi.org/simple"
 
 [tool.uv]
 package = false
+
+# ===============================
+# Type checking & linting
+# ===============================
+[tool.mypy]
+plugins = ["pydantic.mypy"]
+follow_imports = "silent"
+no_implicit_optional = true
+disallow_untyped_defs = true
+namespace_packages = true
+explicit_package_bases = true
+python_version = "3.14"
+
+[tool.pydantic-mypy]
+init_forbid_extra = true
+init_typed = true
+warn_required_dynamic_aliases = true
+
+# ===============================
+# Ruff configuration
+# ===============================
+[tool.ruff]
+fix = true
+line-length = 200
+target-version = "py314"
+
+[tool.ruff.lint]
+ignore = ["ERA001", "C901", "SIM112", "S311", "S324"]
+select = ["E", "F", "Q", "UP", "B", "S", "RUF", "C", "ERA", "PIE", "SIM", "A", "G", "I"]
+
+[tool.ruff.lint.per-file-ignores]
+"**/tests/*" = ["D", "S"]
+
+[tool.ruff.lint.isort]
+lines-between-types = 1
+combine-as-imports = true
+known-first-party = ["stock_analysis_mcp"]
+
+# ===============================
+# Pyrefly configuration
+# ===============================
+[tool.pyrefly]
+python_version = "3.14"

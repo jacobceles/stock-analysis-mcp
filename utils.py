@@ -1,32 +1,27 @@
+import logging
 import os
-import requests
-from datetime import datetime
+
+from typing import Any
+
 import pandas as pd
-import praw
-from ta.trend import (
-    macd,
-    ema_indicator,
-    ichimoku_a,
-    ichimoku_b,
-    adx,
-    psar_up,
-    psar_down,
-    aroon_up,
-    aroon_down,
-)
-from ta.momentum import tsi, rsi, stoch, stoch_signal, roc
-from ta.volume import (
-    on_balance_volume,
-    chaikin_money_flow,
-    volume_weighted_average_price,
-)
+import praw  # type: ignore
+
+from praw.models import Submission  # type: ignore
+from ta.momentum import roc, rsi, stoch, tsi  # type: ignore
+from ta.trend import adx, aroon_down, aroon_up, ema_indicator, ichimoku_a, ichimoku_b, macd, psar_down, psar_up  # type: ignore
+from ta.volume import chaikin_money_flow, on_balance_volume, volume_weighted_average_price  # type: ignore
 
 from constants import (
     DUMP_DIR,
-    REDDIT_SUBREDDITS,
     REDDIT_POST_LIMIT,
+    REDDIT_SUBREDDITS,
 )
+from logging_config import setup_logging
 from nse_client import default_client
+
+setup_logging()
+logger = logging.getLogger("utils")
+
 
 def get_equity_metadata(symbol: str) -> dict:
     # Use the default client to fetch metadata
@@ -34,7 +29,7 @@ def get_equity_metadata(symbol: str) -> dict:
     return response_json.get("metadata", {})
 
 
-def get_data(symbol, start_date, end_date):
+def get_data(symbol: str, start_date: str, end_date: str) -> pd.DataFrame:
     files = os.listdir(DUMP_DIR)
     file_name = f"{symbol}_{start_date}_{end_date}.csv"
     if file_name in files:
@@ -160,9 +155,7 @@ def get_reddit_stock_news(symbol: str, time_filter: str = "month") -> list[dict]
         reddit_user_agent = os.environ.get("REDDIT_USER_AGENT", "stock-analysis-mcp/1.0")
         limit = REDDIT_POST_LIMIT
 
-        reddit = praw.Reddit(
-            client_id=reddit_client_id, client_secret=reddit_client_secret, user_agent=reddit_user_agent
-        )
+        reddit = praw.Reddit(client_id=reddit_client_id, client_secret=reddit_client_secret, user_agent=reddit_user_agent)
 
         posts = []
         search_query = f"{symbol} OR '${symbol}'"
@@ -187,7 +180,8 @@ def get_reddit_stock_news(symbol: str, time_filter: str = "month") -> list[dict]
                             "flair": post.link_flair_text if post.link_flair_text else "None",
                         }
                     )
-            except Exception:
+            except Exception as e:
+                logger.warning("Error fetching Reddit posts for %s: %s", symbol, e)
                 continue
 
         posts.sort(key=lambda x: x["score"], reverse=True)
@@ -196,16 +190,17 @@ def get_reddit_stock_news(symbol: str, time_filter: str = "month") -> list[dict]
     except Exception as e:
         return [
             {
-                "message": f"Error fetching Reddit posts for {symbol}: {str(e)}",
+                "message": f"Error fetching Reddit posts for {symbol}: {e!s}",
             }
         ]
 
 
-def get_top_comments(post, limit=3):
+def get_top_comments(post: Submission, limit: int = 3) -> list[dict[str, Any]]:
     """Fetches top comments from a post."""
-    comments = []
+    comments: list[dict[str, Any]] = []
     post.comments.replace_more(limit=0)
-    for comment in post.comments[:limit]:
+    for i in range(min(limit, len(post.comments))):
+        comment = post.comments[i]
         comments.append(
             {
                 "author": str(comment.author),

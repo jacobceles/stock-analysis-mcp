@@ -1,32 +1,69 @@
+import ast
+import operator
+import os
+
+from collections.abc import Callable
 from typing import Any
-from starlette.requests import Request
-from starlette.responses import Response, JSONResponse
+
 from fastmcp import FastMCP
+from starlette.requests import Request
+from starlette.responses import JSONResponse, Response
 
 from utils import (
+    get_chaikin_money_flow,
     get_data,
-    get_equity_metadata,
-    get_macd,
-    get_rsi,
-    get_tsi,
-    get_stoch,
-    get_roc,
     get_ema,
+    get_equity_metadata,
     get_ichimoku_a,
     get_ichimoku_b,
+    get_macd,
     # get_psar_down, get_psar_up, get_aroon_down, get_aroon_up,
     get_on_balance_volume,
-    get_chaikin_money_flow,
-    get_volume_weighted_average_price,
     get_reddit_stock_news,
+    get_roc,
+    get_rsi,
+    get_stoch,
+    get_tsi,
+    get_volume_weighted_average_price,
 )
 
 # Create a server instance
-mcp = FastMCP(name="NSE stock Analysis Server")
+mcp = FastMCP(name="NSE Stock Analysis Server")
+
+binary_operators: dict[type, Callable[..., float]] = {
+    ast.Add: operator.add,
+    ast.Sub: operator.sub,
+    ast.Mult: operator.mul,
+    ast.Div: operator.truediv,
+    ast.Pow: operator.pow,
+}
+
+unary_operators: dict[type, Callable[..., float]] = {
+    ast.USub: operator.neg,
+}
+
+
+def _safe_eval(node: ast.AST) -> float:
+    if isinstance(node, ast.Constant):
+        if isinstance(node.value, int | float):
+            return float(node.value)
+        raise ValueError("Only numeric constants allowed")
+
+    if isinstance(node, ast.BinOp):
+        op = binary_operators[type(node.op)]
+        return op(_safe_eval(node.left), _safe_eval(node.right))
+
+    if isinstance(node, ast.UnaryOp):
+        op = unary_operators[type(node.op)]
+        return op(_safe_eval(node.operand))
+
+    raise ValueError("Unsupported expression")
+
 
 @mcp.custom_route("/health", methods=["GET"])
 async def health_check(request: Request) -> Response:
     return JSONResponse({"status": "ok"})
+
 
 @mcp.tool
 def perform_calculation(equation: str) -> float:
@@ -36,12 +73,12 @@ def perform_calculation(equation: str) -> float:
     Params:
     equation: a mathematical equation as a string without any variables
     """
-
-    return eval(equation)
+    tree = ast.parse(equation, mode="eval")
+    return _safe_eval(tree.body)
 
 
 @mcp.tool
-def get_stock_metadata_tool(symbol: str) -> any:
+def get_stock_metadata_tool(symbol: str) -> Any:
     """
     Gets general information about the stock like PE ratio, sector etc
 
@@ -52,7 +89,7 @@ def get_stock_metadata_tool(symbol: str) -> any:
 
 
 @mcp.tool
-def get_equity_data(symbol: str, start_date: str, end_date: str) -> any:
+def get_equity_data(symbol: str, start_date: str, end_date: str) -> Any:
     """
     Gets the historical data for the given stock based on the dates provided
 
@@ -234,5 +271,10 @@ def get_reddit_stock_news_tool(symbol: str, time_filter: str = "month") -> list[
 
 
 if __name__ == "__main__":
-    # mcp.run(transport="http", host="127.0.0.1", port=8000, path="/mcp")
-    mcp.run(transport="sse", host="0.0.0.0", port=8000)
+    host = os.getenv("HOST", "127.0.0.1")
+
+    mcp.run(
+        transport="sse",
+        host=host,
+        port=8000,
+    )
