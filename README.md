@@ -64,6 +64,12 @@ We use VS Code's integrated Tasks to streamline development workflows. You can r
 4. **Tear down:**
    - Run task: `Docker: Stop Services`
 
+## Sample Usage
+
+Once the ADK Web UI is running, try asking:
+
+> Analyze the technical indicators for RELIANCE over the last month and plot the MACD
+
 ## Code Quality & Testing
 
 The project requires `ruff` for formatting and linting, and `mypy`/`pyrefly` for strict type checking. Use VS Code tasks to quickly run checks:

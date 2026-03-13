@@ -16,7 +16,7 @@ from stock_analysis_mcp.agent.subagent import generate_plot_code_agent
 from stock_analysis_mcp.logging_config import setup_logging
 
 setup_logging()
-logger = logging.getLogger("tools")
+logger = logging.getLogger(__name__)
 
 
 async def generate_plot_data_agent(data: str, tool_context: ToolContext) -> dict:
