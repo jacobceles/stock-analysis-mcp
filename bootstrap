@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+set -e
+
+echo "Setting up development environment..."
+
+# Sync dependencies
+echo "Installing dependencies..."
+uv sync --all-packages
+
+# Install pre-commit hooks
+if [ -d .git ]; then
+  echo "Installing pre-commit hooks..."
+  uv run pre-commit install
+  echo "Pre-commit hooks installed!"
+else
+  echo "Not a git repository, skipping pre-commit installation"
+fi
+
+echo "Setup complete! You're ready to develop!"

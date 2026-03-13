@@ -1,6 +1,4 @@
-
 import os
-from typing import List
 
 from google.adk.agents import LlmAgent
 from google.adk.models.lite_llm import LiteLlm
@@ -8,11 +6,12 @@ from pydantic import BaseModel, Field
 
 
 class PlotDataOutput(BaseModel):
-    x_values: List[str] = Field(..., description="Ordered x-axis values")
-    y_values: List[float] = Field(..., description="Ordered y-axis values")
+    x_values: list[str] = Field(..., description="Ordered x-axis values")
+    y_values: list[float] = Field(..., description="Ordered y-axis values")
     title: str = Field(default="Plot")
     xlabel: str = Field(default="X-axis")
     ylabel: str = Field(default="Y-axis")
+
 
 generate_plot_code_agent = LlmAgent(
     model=LiteLlm(
@@ -55,5 +54,5 @@ Failure cases:
   {
     "error": "Plotting not possible with the given data"
   }
-"""
+""",
 )

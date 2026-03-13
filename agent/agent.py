@@ -1,5 +1,8 @@
 import datetime
+import logging
 import os
+
+from typing import Any
 
 from google.adk.agents import LlmAgent
 from google.adk.models.lite_llm import LiteLlm
@@ -8,6 +11,10 @@ from google.adk.tools.mcp_tool.mcp_toolset import MCPToolset
 from google.adk.tools.tool_context import ToolContext
 
 from agent.tools import generate_plot, generate_plot_data_agent
+from logging_config import setup_logging
+
+setup_logging()
+logger = logging.getLogger("agent")
 
 # --- State Keys ---
 STATE_TA = "technical_analysis"
@@ -15,20 +22,16 @@ STATE_EVAL = "evaluation"
 COMPLETION_PHRASE = "STOP EXECUTION"
 
 
-def exit_loop(tool_context: ToolContext):
+def exit_loop(tool_context: ToolContext) -> dict[str, Any]:
     """Call this function ONLY when the critique indicates no further changes are needed, signaling
     the iterative process should end."""
-    print(f"  [Tool Call] exit_loop triggered by {tool_context.agent_name}")
+    logger.info("  [Tool Call] exit_loop triggered by %s", tool_context.agent_name)
     tool_context.actions.escalate = True
     # Return empty dict as tools should typically return JSON-serializable output
     return {}
 
 
-mcp_toolset = MCPToolset(
-    connection_params=SseConnectionParams(
-        url=os.environ.get("MCP_URL", "")
-    )
-)
+mcp_toolset = MCPToolset(connection_params=SseConnectionParams(url=os.environ.get("MCP_URL", "")))
 
 today_date = datetime.datetime.now().strftime("%A, %d %B %Y")
 
