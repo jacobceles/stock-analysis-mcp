@@ -30,6 +30,7 @@ def get_equity_metadata(symbol: str) -> dict:
 
 
 def get_data(symbol: str, start_date: str, end_date: str) -> pd.DataFrame:
+    os.makedirs(DUMP_DIR, exist_ok=True)
     files = os.listdir(DUMP_DIR)
     file_name = f"{symbol}_{start_date}_{end_date}.csv"
     if file_name in files:
