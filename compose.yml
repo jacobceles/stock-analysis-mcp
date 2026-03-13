@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   nseindia:
     image: imcodeman/nseindia
