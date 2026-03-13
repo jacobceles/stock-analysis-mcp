@@ -1,0 +1,23 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: FastMCP Server",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "stock_analysis_mcp.server",
+            "envFile": "${workspaceFolder}/.env",
+            "justMyCode": true,
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "Python: ADK Service",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "stock_analysis_mcp.adk_service",
+            "envFile": "${workspaceFolder}/.env",
+            "justMyCode": true,
+            "console": "integratedTerminal"
+        }
+    ]
+}

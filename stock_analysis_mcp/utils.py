@@ -11,13 +11,13 @@ from ta.momentum import roc, rsi, stoch, tsi  # type: ignore
 from ta.trend import adx, aroon_down, aroon_up, ema_indicator, ichimoku_a, ichimoku_b, macd, psar_down, psar_up  # type: ignore
 from ta.volume import chaikin_money_flow, on_balance_volume, volume_weighted_average_price  # type: ignore
 
-from constants import (
+from stock_analysis_mcp.constants import (
     DUMP_DIR,
     REDDIT_POST_LIMIT,
     REDDIT_SUBREDDITS,
 )
-from logging_config import setup_logging
-from nse_client import default_client
+from stock_analysis_mcp.logging_config import setup_logging
+from stock_analysis_mcp.nse_client import default_client
 
 setup_logging()
 logger = logging.getLogger("utils")

@@ -1,9 +1,0 @@
-fastmcp
-requests
-pandas
-ta
-google-generativeai
-google-adk
-praw
-matplotlib
-plotly
