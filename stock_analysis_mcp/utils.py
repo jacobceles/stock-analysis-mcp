@@ -20,7 +20,7 @@ from stock_analysis_mcp.logging_config import setup_logging
 from stock_analysis_mcp.nse_client import default_client
 
 setup_logging()
-logger = logging.getLogger("utils")
+logger = logging.getLogger(__name__)
 
 
 def get_equity_metadata(symbol: str) -> dict:

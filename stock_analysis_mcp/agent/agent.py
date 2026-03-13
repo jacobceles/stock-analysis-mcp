@@ -14,7 +14,7 @@ from stock_analysis_mcp.agent.tools import generate_plot, generate_plot_data_age
 from stock_analysis_mcp.logging_config import setup_logging
 
 setup_logging()
-logger = logging.getLogger("agent")
+logger = logging.getLogger(__name__)
 
 # --- State Keys ---
 STATE_TA = "technical_analysis"
