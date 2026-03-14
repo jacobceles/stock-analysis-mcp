@@ -24,3 +24,10 @@ repos:
         entry: uv run pyrefly check .
         language: system
         pass_filenames: false
+
+      - id: pytest
+        name: Pytest unit tests
+        entry: uv run pytest
+        language: system
+        pass_filenames: false
+        always_run: true

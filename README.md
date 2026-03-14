@@ -4,11 +4,13 @@ This project provides an MCP (Model Context Protocol) server and an ADK-based ag
 
 ## Features
 
+- **OHLC Candlestick Charts**: Generates professional candlestick plots using `finplot` for better technical visualization.
 - **Technical Indicators**: MACD, RSI, EMA, Stochastic Oscillator, Ichimoku Cloud, etc.
 - **Global Stock Data**: Integrated with `yfinance` to support NSE, NYSE, NASDAQ, etc.
 - **Reddit Sentiment Analysis**: Extracts recent stock news and discussions from Reddit.
 - **Volume Metrics**: On-Balance Volume (OBV), Chaikin Money Flow (CMF), VWAP.
 - **ADK Integration**: A built-in agent that leverages LiteLLM to interpret data, generate technical plots, and provide trading insights.
+- **Parallel Testing**: Automated test suite with `pytest-xdist` for fast parallel execution.
 
 ## Project Structure
 
@@ -31,7 +33,7 @@ The project is structured as a suite of microservices:
 ## Prerequisites
 
 - [Docker](https://docs.docker.com/get-docker/) and [Docker Compose](https://docs.docker.com/compose/install/)
-- [uv](https://docs.astral.sh/uv/) (Python package package manager for Python 3.14)
+- [uv](https://docs.astral.sh/uv/) (Python package manager for Python 3.14)
 
 ## Local Development Setup
 
@@ -77,23 +79,26 @@ We use VS Code's integrated Tasks to streamline development workflows. You can r
 
 Once the ADK Web UI is running, try asking:
 
-> Analyze the technical indicators for RELIANCE.NS over the last month and plot the MACD
+> Analyze the technical indicators for RELIANCE.NS over the last month and show me a candlestick chart.
 >
-> Analyze the technical indicators for AAPL over the last month and plot the RSI
+> Analyze the technical indicators for AAPL over the last month and plot the RSI alongside price action.
 
 *Note: For Indian stocks, append `.NS` for NSE or `.BO` for BSE (e.g., `RELIANCE.NS`). US stocks use standard tickers (e.g., `AAPL`).*
 
 ## Code Quality & Testing
 
-The project requires `ruff` for formatting and linting, and `mypy`/`pyrefly` for strict type checking. Use VS Code tasks to quickly run checks:
+The project requires `ruff` for formatting and linting, and `mypy`/`pyrefly` for strict type checking. It also includes a comprehensive test suite using `pytest-xdist` for parallel execution.
 
+- **Run Tests**: Run task `Run Tests` (or execute `uv run pytest` in terminal)
 - **Format your code**: Run task `Format Code`
 - **Run Linters**: Run task `Lint Code (Ruff)`
 - **Run Type Checks**: Run task `Typecheck (Mypy & Pyrefly)`
-- **Run Tests**: Run task `Run Tests`
+
+The tests are also integrated into the **pre-commit** workflow and will run automatically on every commit.
 
 ## Credits
 
 This project uses the following repositories and libraries:
 - [yfinance](https://github.com/ranaroussi/yfinance) for market data
 - [PRAW (Python Reddit API Wrapper)](https://github.com/praw-dev/praw) for Reddit integration
+- [finplot](https://github.com/highfestiva/finplot) for professional financial charting

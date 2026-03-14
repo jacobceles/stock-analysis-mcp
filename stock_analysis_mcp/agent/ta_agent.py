@@ -52,7 +52,7 @@ ta_agent = LlmAgent(
     
     You have to use the given tools to perform technical analysis and provide sound information to the user. 
     You can also fetch recent stock-related news and discussions from Reddit.
-    You can also plot ONLY A SINGLE series line graphs.
+    You can also plot OHLC candlestick charts.
     While performing analysis try to plot relevant graphs for each of the indicators to support your analysis.
     You have to decide whether to BUY or SELL stock and at what price should the action to be taken.
     This action will then executed inside a simulated enviroment to evaluate your capabilities.

@@ -19,18 +19,19 @@ dependencies = [
     "google-generativeai",
     "google-adk",
     "praw",
-    "matplotlib",
     "litellm",
-    "plotly",
     "colorlog>=6.10.1",
     "python-json-logger>=4.0.0",
     "yfinance>=1.2.0",
+    "finplot>=1.9.7",
 ]
 
 [dependency-groups]
 dev = [
     "pytest>=9",
     "pytest-asyncio>=1",
+    "pytest-xdist>=3",
+    "pytest-mock>=3",
     "ruff>=0",
     "mypy>=1",
     "pyrefly>0",
@@ -38,6 +39,16 @@ dev = [
     "types-requests>=2.32.4.20260107",
     "pandas-stubs>=3.0.0.260204",
 ]
+
+# ===============================
+# Pytest configuration
+# ===============================
+[tool.pytest.ini_options]
+addopts = "-n auto --dist loadscope"
+testpaths = ["tests"]
+pythonpath = ["."]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
 
 # ===============================
 # Repository configuration for UV

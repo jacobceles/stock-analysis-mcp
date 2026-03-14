@@ -1,5 +1,5 @@
 # Stage 1: Builder
-FROM python:3.14-slim-bookworm AS builder
+FROM python:3.14-slim-trixie AS builder
 
 # Install uv
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
@@ -16,7 +16,29 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --no-install-project --no-dev
 
 # Stage 2: Runtime
-FROM python:3.14-slim-bookworm AS runtime
+FROM python:3.14-slim-trixie AS runtime
+
+# Install system dependencies for Qt6/finplot
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libgl1 \
+    libegl1 \
+    libopengl0 \
+    libglib2.0-0 \
+    libxkbcommon0 \
+    libdbus-1-3 \
+    libfontconfig1 \
+    libxcb-cursor0 \
+    libxcb-icccm4 \
+    libxcb-image0 \
+    libxcb-keysyms1 \
+    libxcb-render-util0 \
+    libxcb-shape0 \
+    libxcb-xfixes0 \
+    libxcb-xinerama0 \
+    libxcb-xkb1 \
+    libxrender1 \
+    libxi6 \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 

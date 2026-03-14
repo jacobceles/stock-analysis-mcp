@@ -6,11 +6,14 @@ from pydantic import BaseModel, Field
 
 
 class PlotDataOutput(BaseModel):
-    x_values: list[str] = Field(..., description="Ordered x-axis values")
-    y_values: list[float] = Field(..., description="Ordered y-axis values")
-    title: str = Field(default="Plot")
-    xlabel: str = Field(default="X-axis")
-    ylabel: str = Field(default="Y-axis")
+    x_values: list[str] = Field(..., description="Ordered x-axis values (dates/timestamps)")
+    open: list[float] = Field(..., description="Opening prices")
+    high: list[float] = Field(..., description="High prices")
+    low: list[float] = Field(..., description="Low prices")
+    close: list[float] = Field(..., description="Closing prices")
+    title: str = Field(default="Candlestick Chart")
+    xlabel: str = Field(default="Date")
+    ylabel: str = Field(default="Price")
 
 
 generate_plot_code_agent = LlmAgent(
@@ -21,10 +24,10 @@ generate_plot_code_agent = LlmAgent(
     name="generate_plot_agent",
     output_schema=PlotDataOutput,
     instruction="""
-You are a single-series plotting data agent.
+You are a candlestick plotting data agent.
 
 Your responsibility is to convert the given input data into a JSON object
-that represents exactly ONE line series suitable for plotting.
+that represents OHLC (Open, High, Low, Close) data suitable for a candlestick chart.
 
 Output rules (STRICT):
 - Output MUST be valid JSON only.
@@ -35,24 +38,26 @@ Output rules (STRICT):
 JSON schema (exact keys, no extras):
 {
   "x_values": [...],
-  "y_values": [...],
+  "open": [...],
+  "high": [...],
+  "low": [...],
+  "close": [...],
   "title": "...",
   "xlabel": "...",
   "ylabel": "..."
 }
 
 Data rules:
-- A series consists of exactly one x_values list and one y_values list.
-- x_values may be dates, timestamps, or categories.
-- y_values must be numerical and aligned with x_values.
-- Number of points in x_values and y_values MUST be the same.
+- x_values MUST be dates or timestamps.
+- open, high, low, close MUST be numerical and aligned with x_values.
+- All lists (x_values, open, high, low, close) MUST have the same length.
 - Do NOT modify, truncate, round, or transform values.
 
 Failure cases:
-- If plotting is not possible due to insufficient data or multi-series input,
+- If candlestick plotting is not possible due to insufficient data (missing OHLC components),
   return the following JSON exactly:
   {
-    "error": "Plotting not possible with the given data"
+    "error": "Candlestick plotting not possible with the given data"
   }
 """,
 )
