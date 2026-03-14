@@ -37,7 +37,7 @@ The project is structured as a suite of microservices:
 
 ## Local Development Setup
 
-We use VS Code's integrated Tasks to streamline development workflows. You can run these commands from the command palette (`CMD+Shift+P` -> `Tasks: Run Task`).
+We use VS Code's integrated Tasks and a `Makefile` to streamline development workflows. You can run these commands from the command palette (`CMD+Shift+P` -> `Tasks: Run Task`) or directly from your terminal using `make`.
 
 1. **Set up the environment:**
    Create a `.env` file in the project root. Some features require specific keys. You can find a sample in `.env.sample`.
@@ -60,20 +60,21 @@ We use VS Code's integrated Tasks to streamline development workflows. You can r
 
 2. **Bootstrap the project:**
    This command installs all dependencies via `uv` and sets up `pre-commit` hooks.
-   - Run task: `Setup Environment`
+   - **VS Code Task**: `Setup Environment`
+   - **Terminal**: `make setup`
 
 3. **Build and start the services:**
    We use a single consolidated `docker/compose.yml` for our microservices deployment.
-   - Run task: `Docker: Build Images`
-   - Run task: `Docker: Start Services`
+   - **VS Code Task**: `Docker: Build Images` or `make docker-build`
+   - **VS Code Task**: `Docker: Start Services` or `make docker-up`
    
    Once running:
    - The **MCP Server** will be available on port `8000`.
    - The **ADK Web UI** will be available on port `8080`.
-   - To monitor startup logs, run task: `Docker: Tail Logs`
+   - To monitor startup logs, run the task `Docker: Tail Logs` or `make docker-logs`.
 
 4. **Tear down:**
-   - Run task: `Docker: Stop Services`
+   - **VS Code Task**: `Docker: Stop Services` or `make docker-down`
 
 ## Sample Usage
 
@@ -89,10 +90,11 @@ Once the ADK Web UI is running, try asking:
 
 The project requires `ruff` for formatting and linting, and `mypy`/`pyrefly` for strict type checking. It also includes a comprehensive test suite using `pytest-xdist` for parallel execution.
 
-- **Run Tests**: Run task `Run Tests` (or execute `uv run pytest` in terminal)
-- **Format your code**: Run task `Format Code`
-- **Run Linters**: Run task `Lint Code (Ruff)`
-- **Run Type Checks**: Run task `Typecheck (Mypy & Pyrefly)`
+- **Run Tests**: Task `Run Tests` or `make test`
+- **Format your code**: Task `Format Code` or `make format`
+- **Run Linters**: Task `Lint Code (Ruff)` or `make lint`
+- **Run Type Checks**: Task `Typecheck (Mypy & Pyrefly)` or `make typecheck`
+- **Run All Checks**: `make all` (runs setup, format, lint, typecheck, and test)
 
 The tests are also integrated into the **pre-commit** workflow and will run automatically on every commit.
 
