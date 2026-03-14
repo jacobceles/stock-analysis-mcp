@@ -3,7 +3,7 @@ from typing import Any
 
 import requests
 
-from stock_analysis_mcp.constants import HISTORICAL_ENDPOINT, METADATA_ENDPOINT, NSE_HOST_URL
+from stock_analysis_mcp.core.constants import HISTORICAL_ENDPOINT, METADATA_ENDPOINT, NSE_HOST_URL
 
 
 class NSEClient:

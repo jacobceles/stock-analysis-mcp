@@ -9,7 +9,7 @@ from fastmcp import FastMCP
 from starlette.requests import Request
 from starlette.responses import JSONResponse, Response
 
-from stock_analysis_mcp.utils import (
+from stock_analysis_mcp.services.stock_service import (
     get_chaikin_money_flow,
     get_data,
     get_ema,

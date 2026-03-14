@@ -39,28 +39,28 @@
         {
             "label": "Docker: Build Images",
             "type": "shell",
-            "command": "docker compose build",
+            "command": "docker compose -f docker/compose.yml build",
             "problemMatcher": [],
             "group": "build"
         },
         {
             "label": "Docker: Start Services",
             "type": "shell",
-            "command": "docker compose up -d",
+            "command": "docker compose -f docker/compose.yml up -d",
             "problemMatcher": [],
             "group": "build"
         },
         {
             "label": "Docker: Stop Services",
             "type": "shell",
-            "command": "docker compose down",
+            "command": "docker compose -f docker/compose.yml down",
             "problemMatcher": [],
             "group": "build"
         },
         {
             "label": "Docker: Tail Logs",
             "type": "shell",
-            "command": "docker compose logs -f",
+            "command": "docker compose -f docker/compose.yml logs -f",
             "problemMatcher": [],
             "group": "build"
         }
