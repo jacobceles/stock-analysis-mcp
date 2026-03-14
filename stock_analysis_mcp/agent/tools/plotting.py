@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 from google.adk.tools import ToolContext
 from google.adk.tools.agent_tool import AgentTool
 
-from stock_analysis_mcp.agent.subagent import generate_plot_code_agent
+from stock_analysis_mcp.agent.plot_agent import generate_plot_code_agent
 from stock_analysis_mcp.core.logging_config import setup_logging
 
 setup_logging()
