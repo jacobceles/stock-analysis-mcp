@@ -1,11 +1,11 @@
-# MCP Server with NSE India Data
+# Stock Analysis MCP Server
 
-This project provides an MCP (Model Context Protocol) server and an ADK-based agent platform for performing advanced technical analysis and Reddit sentiment analysis on Indian stocks using data from the NSE India API.
+This project provides an MCP (Model Context Protocol) server and an ADK-based agent platform for performing advanced technical analysis and Reddit sentiment analysis on Global stocks (India, USA, etc.) using `yfinance`.
 
 ## Features
 
 - **Technical Indicators**: MACD, RSI, EMA, Stochastic Oscillator, Ichimoku Cloud, etc.
-- **Historical Stock Data**: Directly integrated with NSE India.
+- **Global Stock Data**: Integrated with `yfinance` to support NSE, NYSE, NASDAQ, etc.
 - **Reddit Sentiment Analysis**: Extracts recent stock news and discussions from Reddit.
 - **Volume Metrics**: On-Balance Volume (OBV), Chaikin Money Flow (CMF), VWAP.
 - **ADK Integration**: A built-in agent that leverages LiteLLM to interpret data, generate technical plots, and provide trading insights.
@@ -15,7 +15,7 @@ This project provides an MCP (Model Context Protocol) server and an ADK-based ag
 The project is organized into logical sub-packages for better maintainability:
 
 - **`stock_analysis_mcp/api/`**: Service entry points (MCP and ADK servers).
-- **`stock_analysis_mcp/services/`**: Core business logic, NSE client, and indicator calculations.
+- **`stock_analysis_mcp/services/`**: Core business logic, `yfinance` integration, and indicator calculations.
 - **`stock_analysis_mcp/core/`**: Shared configurations, constants, and logging setup.
 - **`stock_analysis_mcp/agent/`**: LLM agent definitions, prompts, and specialized tools.
 
@@ -24,7 +24,7 @@ The project is organized into logical sub-packages for better maintainability:
 The project is structured as a suite of microservices:
 1. **MCP Server**: The backend FastMCP server handling standard tools and API integrations (`mcp.dockerfile`).
 2. **ADK Service**: The intelligent agent interface (`adk.dockerfile`) capable of complex reasoning and plotting.
-3. **NSE India**: An external service proxying historical data.
+3. **yfinance**: External library for fetching historical and real-time market data.
 
 ---
 
@@ -77,7 +77,11 @@ We use VS Code's integrated Tasks to streamline development workflows. You can r
 
 Once the ADK Web UI is running, try asking:
 
-> Analyze the technical indicators for RELIANCE over the last month and plot the MACD
+> Analyze the technical indicators for RELIANCE.NS over the last month and plot the MACD
+>
+> Analyze the technical indicators for AAPL over the last month and plot the RSI
+
+*Note: For Indian stocks, append `.NS` for NSE or `.BO` for BSE (e.g., `RELIANCE.NS`). US stocks use standard tickers (e.g., `AAPL`).*
 
 ## Code Quality & Testing
 
@@ -91,5 +95,5 @@ The project requires `ruff` for formatting and linting, and `mypy`/`pyrefly` for
 ## Credits
 
 This project uses the following repositories and libraries:
-- [stock-nse-india](https://github.com/hi-imcodeman/stock-nse-india) for NSE India data
+- [yfinance](https://github.com/ranaroussi/yfinance) for market data
 - [PRAW (Python Reddit API Wrapper)](https://github.com/praw-dev/praw) for Reddit integration

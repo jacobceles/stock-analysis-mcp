@@ -24,6 +24,7 @@ dependencies = [
     "plotly",
     "colorlog>=6.10.1",
     "python-json-logger>=4.0.0",
+    "yfinance>=1.2.0",
 ]
 
 [dependency-groups]

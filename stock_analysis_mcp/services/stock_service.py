@@ -5,6 +5,7 @@ from typing import Any
 
 import pandas as pd
 import praw  # type: ignore
+import yfinance as yf  # type: ignore
 
 from praw.models import Submission  # type: ignore
 from ta.momentum import roc, rsi, stoch, tsi  # type: ignore
@@ -17,57 +18,94 @@ from stock_analysis_mcp.core.constants import (
     REDDIT_SUBREDDITS,
 )
 from stock_analysis_mcp.core.logging_config import setup_logging
-from stock_analysis_mcp.services.nse_client import default_client
 
 setup_logging()
 logger = logging.getLogger(__name__)
 
 
 def get_equity_metadata(symbol: str) -> dict:
-    # Use the default client to fetch metadata
-    response_json = default_client.get_metadata(symbol)
-    return response_json.get("metadata", {})
+    """Fetches metadata for a given symbol using yfinance."""
+    try:
+        ticker = yf.Ticker(symbol)
+        return ticker.info
+    except Exception as e:
+        logger.error("Error fetching metadata for %s: %s", symbol, e)
+        return {}
 
 
 def get_data(symbol: str, start_date: str, end_date: str) -> pd.DataFrame:
+    """Fetches historical price data for a given symbol using yfinance and caches it."""
     os.makedirs(DUMP_DIR, exist_ok=True)
-    files = os.listdir(DUMP_DIR)
     file_name = f"{symbol}_{start_date}_{end_date}.csv"
-    if file_name in files:
-        file_path = os.path.join(DUMP_DIR, file_name)
-        df = pd.read_csv(file_path)
-    else:
-        response = default_client.get_historical(symbol, start_date, end_date)
-        merged_data = []
-        merged_data.extend(response)
-        df = pd.DataFrame(merged_data)
-        file_name = f"{symbol}_{start_date}_{end_date}.csv"
-        file_path = os.path.join(DUMP_DIR, file_name)
+    file_path = os.path.join(DUMP_DIR, file_name)
+
+    if os.path.exists(file_path):
+        return pd.read_csv(file_path)
+
+    try:
+        logger.info("Fetching data for %s from %s to %s", symbol, start_date, end_date)
+        df = yf.download(symbol, start=start_date, end=end_date, progress=False)
+
+        if df.empty:
+            logger.warning("No data found for %s", symbol)
+            return pd.DataFrame()
+
+        # Handle multi-index columns if they exist
+        if isinstance(df.columns, pd.MultiIndex):
+            df.columns = df.columns.get_level_values(0)
+
+        df = df.reset_index()
+
+        # Normalize column names
+        df = df.rename(
+            columns={
+                "Date": "Date",
+                "Open": "Open",
+                "High": "High",
+                "Low": "Low",
+                "Close": "Close",
+                "Adj Close": "Adj_Close",
+                "Volume": "Volume",
+            }
+        )
+
         df.to_csv(file_path, index=False)
-    return df
+        return df
+
+    except Exception as e:
+        logger.error("Error fetching data for %s: %s", symbol, e)
+        return pd.DataFrame()
 
 
 def get_macd(symbol: str, start_date: str, end_date: str) -> list[float]:
     df = get_data(symbol, start_date, end_date)
-    return macd(df.CH_CLOSING_PRICE, fillna=True).tolist()
+    if df.empty:
+        return []
+    return macd(df.Close, fillna=True).tolist()
 
 
 def get_rsi(symbol: str, start_date: str, end_date: str) -> list[float]:
     df = get_data(symbol, start_date, end_date)
-    return rsi(df.CH_CLOSING_PRICE, fillna=True).tolist()
+    if df.empty:
+        return []
+    return rsi(df.Close, fillna=True).tolist()
 
 
 def get_tsi(symbol: str, start_date: str, end_date: str) -> list[float]:
     df = get_data(symbol, start_date, end_date)
-    return tsi(df.CH_CLOSING_PRICE, fillna=True).tolist()
+    if df.empty:
+        return []
+    return tsi(df.Close, fillna=True).tolist()
 
 
 def get_stoch(symbol: str, start_date: str, end_date: str, window: int, smooth_window: int) -> list[float]:
     df = get_data(symbol, start_date, end_date)
+    if df.empty:
+        return []
     return stoch(
-        df.CH_TRADE_HIGH_PRICE,
-        df.CH_TRADE_LOW_PRICE,
-        df.CH_CLOSING_PRICE,
+        df.High,
+        df.Low,
+        df.Close,
         window,
         smooth_window,
         fillna=True,
@@ -76,75 +114,96 @@ def get_stoch(symbol: str, start_date: str, end_date: str, window: int, smooth_w
 
 def get_roc(symbol: str, start_date: str, end_date: str, window: int) -> list[float]:
     df = get_data(symbol, start_date, end_date)
-    return roc(df.CH_CLOSING_PRICE, window, fillna=True).tolist()
+    if df.empty:
+        return []
+    return roc(df.Close, window, fillna=True).tolist()
 
 
 def get_ema(symbol: str, start_date: str, end_date: str, window: int) -> list[float]:
     df = get_data(symbol, start_date, end_date)
-    return ema_indicator(df.CH_CLOSING_PRICE, window, fillna=True).tolist()
+    if df.empty:
+        return []
+    return ema_indicator(df.Close, window, fillna=True).tolist()
 
 
 def get_ichimoku_a(symbol: str, start_date: str, end_date: str) -> list[float]:
     df = get_data(symbol, start_date, end_date)
-    return ichimoku_a(df.CH_TRADE_HIGH_PRICE, df.CH_TRADE_LOW_PRICE, fillna=True).tolist()
+    if df.empty:
+        return []
+    return ichimoku_a(df.High, df.Low, fillna=True).tolist()
 
 
 def get_ichimoku_b(symbol: str, start_date: str, end_date: str) -> list[float]:
     df = get_data(symbol, start_date, end_date)
-    return ichimoku_b(df.CH_TRADE_HIGH_PRICE, df.CH_TRADE_LOW_PRICE, fillna=True).tolist()
+    if df.empty:
+        return []
+    return ichimoku_b(df.High, df.Low, fillna=True).tolist()
 
 
 def get_adx(symbol: str, start_date: str, end_date: str) -> list[float]:
     df = get_data(symbol, start_date, end_date)
-    return adx(df.CH_TRADE_HIGH_PRICE, df.CH_TRADE_LOW_PRICE, df.CH_CLOSING_PRICE, fillna=True).tolist()
+    if df.empty:
+        return []
+    return adx(df.High, df.Low, df.Close, fillna=True).tolist()
 
 
 def get_psar_up(symbol: str, start_date: str, end_date: str) -> list[float]:
     df = get_data(symbol, start_date, end_date)
-    return psar_up(df.CH_TRADE_HIGH_PRICE, df.CH_TRADE_LOW_PRICE, df.CH_CLOSING_PRICE, fillna=True).tolist()
+    if df.empty:
+        return []
+    return psar_up(df.High, df.Low, df.Close, fillna=True).tolist()
 
 
 def get_psar_down(symbol: str, start_date: str, end_date: str) -> list[float]:
     df = get_data(symbol, start_date, end_date)
-    return psar_down(df.CH_TRADE_HIGH_PRICE, df.CH_TRADE_LOW_PRICE, df.CH_CLOSING_PRICE, fillna=True).tolist()
+    if df.empty:
+        return []
+    return psar_down(df.High, df.Low, df.Close, fillna=True).tolist()
 
 
 def get_aroon_up(symbol: str, start_date: str, end_date: str) -> list[float]:
     df = get_data(symbol, start_date, end_date)
-    return aroon_up(df.CH_TRADE_HIGH_PRICE, df.CH_TRADE_LOW_PRICE, df.CH_CLOSING_PRICE, fillna=True).tolist()
+    if df.empty:
+        return []
+    return aroon_up(df.High, df.Low, df.Close, fillna=True).tolist()
 
 
 def get_aroon_down(symbol: str, start_date: str, end_date: str) -> list[float]:
     df = get_data(symbol, start_date, end_date)
-    return aroon_down(df.CH_TRADE_HIGH_PRICE, df.CH_TRADE_LOW_PRICE, df.CH_CLOSING_PRICE, fillna=True).tolist()
-
-
-# Volume based metrics - On-Balance Volume (OBV), Chaikin Money Flow (CMF), Volume Weighted Average Price (VWAP)
+    if df.empty:
+        return []
+    return aroon_down(df.High, df.Low, df.Close, fillna=True).tolist()
 
 
 def get_on_balance_volume(symbol: str, start_date: str, end_date: str) -> list[float]:
     df = get_data(symbol, start_date, end_date)
-    return on_balance_volume(df.CH_CLOSING_PRICE, df.CH_TOT_TRADED_QTY, fillna=True).tolist()
+    if df.empty:
+        return []
+    return on_balance_volume(df.Close, df.Volume, fillna=True).tolist()
 
 
 def get_chaikin_money_flow(symbol: str, start_date: str, end_date: str) -> list[float]:
     df = get_data(symbol, start_date, end_date)
+    if df.empty:
+        return []
     return chaikin_money_flow(
-        df.CH_TRADE_HIGH_PRICE,
-        df.CH_TRADE_LOW_PRICE,
-        df.CH_CLOSING_PRICE,
-        df.CH_TOT_TRADED_QTY,
+        df.High,
+        df.Low,
+        df.Close,
+        df.Volume,
         fillna=True,
     ).tolist()
 
 
 def get_volume_weighted_average_price(symbol: str, start_date: str, end_date: str) -> list[float]:
     df = get_data(symbol, start_date, end_date)
+    if df.empty:
+        return []
     return volume_weighted_average_price(
-        df.CH_TRADE_HIGH_PRICE,
-        df.CH_TRADE_LOW_PRICE,
-        df.CH_CLOSING_PRICE,
-        df.CH_TOT_TRADED_QTY,
+        df.High,
+        df.Low,
+        df.Close,
+        df.Volume,
         fillna=True,
     ).tolist()
 
@@ -189,11 +248,7 @@ def get_reddit_stock_news(symbol: str, time_filter: str = "month") -> list[dict]
         return posts[:limit]
 
     except Exception as e:
-        return [
-            {
-                "message": f"Error fetching Reddit posts for {symbol}: {e!s}",
-            }
-        ]
+        return [{"message": f"Error fetching Reddit posts for {symbol}: {e!s}"}]
 
 
 def get_top_comments(post: Submission, limit: int = 3) -> list[dict[str, Any]]:
