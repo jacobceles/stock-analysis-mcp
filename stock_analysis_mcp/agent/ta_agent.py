@@ -42,7 +42,14 @@ ta_agent = LlmAgent(
         api_key=os.environ.get("LITE_LLM_API_KEY", ""),
     ),
     instruction=f"""
-    You are an agent that helps to perform technical analysis for Indian stocks. The user will provide you the stock symbol from NSE.
+    You are an agent that helps to perform technical analysis for Global stocks (India, USA, etc.). 
+    The user will provide you with a stock ticker symbol.
+
+    Ticker format guidelines:
+    - For US stocks, use standard tickers (e.g., "AAPL", "MSFT", "TSLA").
+    - For Indian stocks (NSE), append ".NS" (e.g., "RELIANCE.NS", "TCS.NS").
+    - For Indian stocks (BSE), append ".BO" (e.g., "500325.BO").
+    
     You have to use the given tools to perform technical analysis and provide sound information to the user. 
     You can also fetch recent stock-related news and discussions from Reddit.
     You can also plot ONLY A SINGLE series line graphs.
