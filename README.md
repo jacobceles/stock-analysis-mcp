@@ -10,6 +10,15 @@ This project provides an MCP (Model Context Protocol) server and an ADK-based ag
 - **Volume Metrics**: On-Balance Volume (OBV), Chaikin Money Flow (CMF), VWAP.
 - **ADK Integration**: A built-in agent that leverages LiteLLM to interpret data, generate technical plots, and provide trading insights.
 
+## Project Structure
+
+The project is organized into logical sub-packages for better maintainability:
+
+- **`stock_analysis_mcp/api/`**: Service entry points (MCP and ADK servers).
+- **`stock_analysis_mcp/services/`**: Core business logic, NSE client, and indicator calculations.
+- **`stock_analysis_mcp/core/`**: Shared configurations, constants, and logging setup.
+- **`stock_analysis_mcp/agent/`**: LLM agent definitions, prompts, and specialized tools.
+
 ## Architecture
 
 The project is structured as a suite of microservices:
@@ -52,7 +61,7 @@ We use VS Code's integrated Tasks to streamline development workflows. You can r
    - Run task: `Setup Environment`
 
 3. **Build and start the services:**
-   We use a single consolidated `compose.yml` for our microservices deployment.
+   We use a single consolidated `docker/compose.yml` for our microservices deployment.
    - Run task: `Docker: Build Images`
    - Run task: `Docker: Start Services`
    

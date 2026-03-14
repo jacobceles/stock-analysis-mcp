@@ -7,7 +7,7 @@ services:
 
   mcp:
     build:
-      context: .
+      context: ..
       dockerfile: docker/mcp.dockerfile
     environment:
       - GOOGLE_API_KEY=${GOOGLE_API_KEY}
@@ -22,7 +22,7 @@ services:
 
   adk:
     build:
-      context: .
+      context: ..
       dockerfile: docker/adk.dockerfile
     environment:
       - GOOGLE_API_KEY=${GOOGLE_API_KEY}
