@@ -1,6 +1,6 @@
 import logging
 import os
-import sys
+
 import pytest
 
 from colorlog import ColoredFormatter
@@ -40,6 +40,7 @@ def test_setup_logging_json_default(mocker):
     assert isinstance(handler, logging.StreamHandler)
     assert isinstance(handler.formatter, jsonlogger.JsonFormatter)
 
+
 def test_setup_logging_color_format(mocker):
     # Mock environment variable LOG_FORMAT
     mocker.patch.dict(os.environ, {"LOG_FORMAT": "color"}, clear=True)
@@ -61,6 +62,7 @@ def test_get_logger():
     logger = get_logger("test_logger")
     assert isinstance(logger, logging.Logger)
     assert logger.name == "test_logger"
+
 
 def test_get_logger_no_name():
     logger = get_logger()

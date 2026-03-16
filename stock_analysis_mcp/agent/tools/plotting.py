@@ -76,7 +76,7 @@ async def generate_plot(tool_context: ToolContext) -> bool:
         try:
             df["Date"] = pd.to_datetime(df["Date"])
             df.set_index("Date", inplace=True)
-        except (ValueError, TypeError):
+        except ValueError, TypeError:
             # Fallback to simple range if x is not datetime
             df.index = pd.Index(range(len(df)))
 
