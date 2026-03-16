@@ -33,6 +33,16 @@ def test_get_data_success(mocker: MockerFixture, mock_df: pd.DataFrame) -> None:
     assert len(df) == 2
 
 
+def test_get_data_exception(mocker: MockerFixture) -> None:
+    mocker.patch("yfinance.download", side_effect=Exception("API Error"))
+    # Mock os.makedirs and os.path.exists to reach the yf.download call
+    mocker.patch("os.makedirs")
+    mocker.patch("os.path.exists", return_value=False)
+
+    df = get_data("AAPL", "2023-01-01", "2023-01-02")
+    assert df.empty
+
+
 def test_get_macd(mocker: MockerFixture, mock_df: pd.DataFrame) -> None:
     mocker.patch("stock_analysis_mcp.services.stock_service.get_data", return_value=mock_df)
     # Mock macd function from ta
