@@ -1,4 +1,5 @@
 import ast
+import math
 import operator
 import os
 
@@ -30,12 +31,24 @@ from stock_analysis_mcp.services.stock_service import (
 # Create a server instance
 mcp = FastMCP(name="NSE Stock Analysis Server")
 
+
+def _safe_pow(base: float, exp: float) -> float:
+    """
+    Safe exponentiation function that limits the exponent size and ensures float results.
+    """
+    if abs(exp) > 1000:
+        raise ValueError(f"Exponent {exp} too large")
+
+    result = math.pow(base, exp)
+    return float(result)
+
+
 binary_operators: dict[type, Callable[..., float]] = {
     ast.Add: operator.add,
     ast.Sub: operator.sub,
     ast.Mult: operator.mul,
     ast.Div: operator.truediv,
-    ast.Pow: operator.pow,
+    ast.Pow: _safe_pow,
 }
 
 unary_operators: dict[type, Callable[..., float]] = {
@@ -51,11 +64,17 @@ def _safe_eval(node: ast.AST) -> float:
 
     if isinstance(node, ast.BinOp):
         op = binary_operators[type(node.op)]
-        return op(_safe_eval(node.left), _safe_eval(node.right))
+        try:
+            return op(_safe_eval(node.left), _safe_eval(node.right))
+        except (OverflowError, ZeroDivisionError, ValueError) as e:
+            raise ValueError(f"Arithmetic error: {e}") from e
 
     if isinstance(node, ast.UnaryOp):
         op = unary_operators[type(node.op)]
-        return op(_safe_eval(node.operand))
+        try:
+            return op(_safe_eval(node.operand))
+        except (OverflowError, ValueError) as e:
+            raise ValueError(f"Arithmetic error: {e}") from e
 
     raise ValueError("Unsupported expression")
 
