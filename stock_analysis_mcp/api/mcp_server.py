@@ -11,6 +11,8 @@ from starlette.requests import Request
 from starlette.responses import JSONResponse, Response
 
 from stock_analysis_mcp.services.stock_service import (
+    get_aroon_down,
+    get_aroon_up,
     get_chaikin_money_flow,
     get_data,
     get_ema,
@@ -18,8 +20,9 @@ from stock_analysis_mcp.services.stock_service import (
     get_ichimoku_a,
     get_ichimoku_b,
     get_macd,
-    # get_psar_down, get_psar_up, get_aroon_down, get_aroon_up,
     get_on_balance_volume,
+    get_psar_down,
+    get_psar_up,
     get_reddit_stock_news,
     get_roc,
     get_rsi,
@@ -239,6 +242,58 @@ def get_ichimoku_b_tool(symbol: str, start_date: str, end_date: str) -> list[flo
     end_date: the end date of the range, should be in YYYY-MM-DD
     """
     return get_ichimoku_b(symbol, start_date, end_date)
+
+
+@mcp.tool
+def get_psar_up_tool(symbol: str, start_date: str, end_date: str) -> list[float]:
+    """
+    Computes the Parabolic SAR (Up)
+
+    Params:
+    symbol: Upper case symbol of the stock
+    start_date: the start date of the range, should be in YYYY-MM-DD
+    end_date: the end date of the range, should be in YYYY-MM-DD
+    """
+    return get_psar_up(symbol, start_date, end_date)
+
+
+@mcp.tool
+def get_psar_down_tool(symbol: str, start_date: str, end_date: str) -> list[float]:
+    """
+    Computes the Parabolic SAR (Down)
+
+    Params:
+    symbol: Upper case symbol of the stock
+    start_date: the start date of the range, should be in YYYY-MM-DD
+    end_date: the end date of the range, should be in YYYY-MM-DD
+    """
+    return get_psar_down(symbol, start_date, end_date)
+
+
+@mcp.tool
+def get_aroon_up_tool(symbol: str, start_date: str, end_date: str) -> list[float]:
+    """
+    Computes the Aroon Up indicator
+
+    Params:
+    symbol: Upper case symbol of the stock
+    start_date: the start date of the range, should be in YYYY-MM-DD
+    end_date: the end date of the range, should be in YYYY-MM-DD
+    """
+    return get_aroon_up(symbol, start_date, end_date)
+
+
+@mcp.tool
+def get_aroon_down_tool(symbol: str, start_date: str, end_date: str) -> list[float]:
+    """
+    Computes the Aroon Down indicator
+
+    Params:
+    symbol: Upper case symbol of the stock
+    start_date: the start date of the range, should be in YYYY-MM-DD
+    end_date: the end date of the range, should be in YYYY-MM-DD
+    """
+    return get_aroon_down(symbol, start_date, end_date)
 
 
 def get_on_balance_volume_tool(symbol: str, start_date: str, end_date: str) -> list[float]:
