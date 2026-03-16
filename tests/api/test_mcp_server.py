@@ -6,8 +6,10 @@ from unittest.mock import MagicMock
 import pytest
 
 from pytest_mock import MockerFixture
+from starlette.testclient import TestClient
 
 from stock_analysis_mcp.api.mcp_server import (
+    mcp,
     _safe_eval,
     _safe_pow,
     get_chaikin_money_flow_tool,
@@ -61,6 +63,11 @@ def test_safe_eval_binop() -> None:
 
 def test_safe_eval_unaryop() -> None:
     assert _safe_eval(ast.parse("-5", mode="eval").body) == -5.0
+
+
+def test_safe_eval_unaryop_error() -> None:
+    with pytest.raises(ValueError, match="Arithmetic error: Unsupported expression"):
+        _safe_eval(ast.parse("-x", mode="eval").body)
 
 
 def test_safe_eval_unsupported() -> None:
@@ -170,3 +177,20 @@ def test_get_reddit_stock_news_tool(mocker: MockerFixture) -> None:
     mock_func = mocker.patch("stock_analysis_mcp.api.mcp_server.get_reddit_stock_news", return_value=[{"title": "News"}])
     assert get_reddit_stock_news_tool("AAPL", "week") == [{"title": "News"}]
     mock_func.assert_called_once_with("AAPL", "week")
+
+
+@pytest.mark.asyncio
+async def test_mcp_app_configuration() -> None:
+    assert mcp.name == "NSE Stock Analysis Server"
+    tools = await mcp.list_tools()
+    tool_names = [t.name for t in tools]
+    assert "get_stock_metadata_tool" in tool_names
+    assert "get_equity_data" in tool_names
+
+
+def test_mcp_http_app_health_endpoint() -> None:
+    app = mcp.http_app()
+    client = TestClient(app)
+    response = client.get("/health")
+    assert response.status_code == 200
+    assert response.json() == {"status": "ok"}
