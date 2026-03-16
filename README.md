@@ -5,7 +5,7 @@ This project provides an MCP (Model Context Protocol) server and an ADK-based ag
 ## Features
 
 - **OHLC Candlestick Charts**: Generates professional candlestick plots using `finplot` for better technical visualization.
-- **Technical Indicators**: MACD, RSI, EMA, Stochastic Oscillator, Ichimoku Cloud, etc.
+- **Technical Indicators**: MACD, RSI, TSI, EMA, ROC, Stochastic Oscillator, Ichimoku Cloud, ADX, Parabolic SAR, Aroon.
 - **Global Stock Data**: Integrated with `yfinance` to support NSE, NYSE, NASDAQ, etc.
 - **Reddit Sentiment Analysis**: Extracts recent stock news and discussions from Reddit.
 - **Volume Metrics**: On-Balance Volume (OBV), Chaikin Money Flow (CMF), VWAP.
@@ -55,6 +55,7 @@ We use VS Code's integrated Tasks and a `Makefile` to streamline development wor
    - `HOST`: Host address for the servers (defaults to `127.0.0.1`).
    - `PORT`: Port for the ADK web interface (defaults to `8080`).
    - `MCP_URL`: Target URL for the MCP Tool (defaults to `http://mcp:8000/sse` in docker).
+   - `GOOGLE_API_KEY`: API key for Google services (if using Gemini models via ADK).
    - `REDDIT_USER_AGENT`: User agent for Reddit requests (defaults to `stock-analysis-mcp/1.0`).
    - `LOG_FORMAT`: Set to `color` for human-readable console logs, otherwise defaults to `json`.
 

@@ -11,6 +11,9 @@ from starlette.requests import Request
 from starlette.responses import JSONResponse, Response
 
 from stock_analysis_mcp.services.stock_service import (
+    get_adx,
+    get_aroon_down,
+    get_aroon_up,
     get_chaikin_money_flow,
     get_data,
     get_ema,
@@ -19,6 +22,8 @@ from stock_analysis_mcp.services.stock_service import (
     get_ichimoku_b,
     get_macd,
     get_on_balance_volume,
+    get_psar_down,
+    get_psar_up,
     get_reddit_stock_news,
     get_roc,
     get_rsi,
@@ -238,6 +243,52 @@ def get_ichimoku_b_tool(symbol: str, start_date: str, end_date: str) -> list[flo
     end_date: the end date of the range, should be in YYYY-MM-DD
     """
     return get_ichimoku_b(symbol, start_date, end_date)
+
+
+_OPTIONAL_TOOLS: dict[str, Callable[..., list[float]]] = {
+    "adx": lambda symbol, start_date, end_date: get_adx(symbol, start_date, end_date),
+    "psar_up": lambda symbol, start_date, end_date: get_psar_up(symbol, start_date, end_date),
+    "psar_down": lambda symbol, start_date, end_date: get_psar_down(symbol, start_date, end_date),
+    "aroon_up": lambda symbol, start_date, end_date: get_aroon_up(symbol, start_date, end_date),
+    "aroon_down": lambda symbol, start_date, end_date: get_aroon_down(symbol, start_date, end_date),
+}
+
+_TOOL_DESCRIPTIONS: dict[str, str] = {
+    "adx": "Computes the Average Directional Index (ADX)",
+    "psar_up": "Computes the Parabolic SAR (uptrend)",
+    "psar_down": "Computes the Parabolic SAR (downtrend)",
+    "aroon_up": "Computes the Aroon Up indicator",
+    "aroon_down": "Computes the Aroon Down indicator",
+}
+
+
+def _register_optional_tools() -> None:
+    """Register optional tools listed in OPTIONAL_INDICATOR_TOOLS env var (comma-separated)."""
+    enabled = os.environ.get("OPTIONAL_INDICATOR_TOOLS", "")
+    if not enabled:
+        return
+
+    tool_names = [t.strip().lower() for t in enabled.split(",") if t.strip()]
+
+    for name in tool_names:
+        if name not in _OPTIONAL_TOOLS:
+            continue
+        fn = _OPTIONAL_TOOLS[name]
+        tool_name = f"get_{name}_tool"
+        description = (
+            f"{_TOOL_DESCRIPTIONS[name]}\n\n"
+            "Params:\n"
+            "symbol: Upper case symbol of the stock\n"
+            "start_date: the start date of the range, should be in YYYY-MM-DD\n"
+            "end_date: the end date of the range, should be in YYYY-MM-DD"
+        )
+
+        @mcp.tool(name=tool_name, description=description)
+        def _tool(symbol: str, start_date: str, end_date: str, _fn: Callable[..., list[float]] = fn) -> list[float]:
+            return _fn(symbol, start_date, end_date)
+
+
+_register_optional_tools()
 
 
 @mcp.tool
