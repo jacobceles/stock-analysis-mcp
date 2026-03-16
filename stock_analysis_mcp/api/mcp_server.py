@@ -18,7 +18,6 @@ from stock_analysis_mcp.services.stock_service import (
     get_ichimoku_a,
     get_ichimoku_b,
     get_macd,
-    # get_psar_down, get_psar_up, get_aroon_down, get_aroon_up,
     get_on_balance_volume,
     get_reddit_stock_news,
     get_roc,
