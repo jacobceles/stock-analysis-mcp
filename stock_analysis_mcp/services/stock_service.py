@@ -9,7 +9,7 @@ import yfinance as yf  # type: ignore
 
 from praw.models import Submission  # type: ignore
 from ta.momentum import roc, rsi, stoch, tsi  # type: ignore
-from ta.trend import adx, aroon_down, aroon_up, ema_indicator, ichimoku_a, ichimoku_b, macd, psar_down, psar_up  # type: ignore
+from ta.trend import adx, ema_indicator, ichimoku_a, ichimoku_b, macd  # type: ignore
 from ta.volume import chaikin_money_flow, on_balance_volume, volume_weighted_average_price  # type: ignore
 
 from stock_analysis_mcp.core.constants import (
@@ -145,34 +145,6 @@ def get_adx(symbol: str, start_date: str, end_date: str) -> list[float]:
     if df.empty:
         return []
     return adx(df.High, df.Low, df.Close, fillna=True).tolist()
-
-
-def get_psar_up(symbol: str, start_date: str, end_date: str) -> list[float]:
-    df = get_data(symbol, start_date, end_date)
-    if df.empty:
-        return []
-    return psar_up(df.High, df.Low, df.Close, fillna=True).tolist()
-
-
-def get_psar_down(symbol: str, start_date: str, end_date: str) -> list[float]:
-    df = get_data(symbol, start_date, end_date)
-    if df.empty:
-        return []
-    return psar_down(df.High, df.Low, df.Close, fillna=True).tolist()
-
-
-def get_aroon_up(symbol: str, start_date: str, end_date: str) -> list[float]:
-    df = get_data(symbol, start_date, end_date)
-    if df.empty:
-        return []
-    return aroon_up(df.High, df.Low, df.Close, fillna=True).tolist()
-
-
-def get_aroon_down(symbol: str, start_date: str, end_date: str) -> list[float]:
-    df = get_data(symbol, start_date, end_date)
-    if df.empty:
-        return []
-    return aroon_down(df.High, df.Low, df.Close, fillna=True).tolist()
 
 
 def get_on_balance_volume(symbol: str, start_date: str, end_date: str) -> list[float]:
