@@ -241,6 +241,7 @@ def get_ichimoku_b_tool(symbol: str, start_date: str, end_date: str) -> list[flo
     return get_ichimoku_b(symbol, start_date, end_date)
 
 
+@mcp.tool
 def get_on_balance_volume_tool(symbol: str, start_date: str, end_date: str) -> list[float]:
     """
     Computes the On Balance Volume
@@ -253,6 +254,7 @@ def get_on_balance_volume_tool(symbol: str, start_date: str, end_date: str) -> l
     return get_on_balance_volume(symbol, start_date, end_date)
 
 
+@mcp.tool
 def get_chaikin_money_flow_tool(symbol: str, start_date: str, end_date: str) -> list[float]:
     """
     Computes the Chaikin Money Flow (CMF)
@@ -265,6 +267,7 @@ def get_chaikin_money_flow_tool(symbol: str, start_date: str, end_date: str) -> 
     return get_chaikin_money_flow(symbol, start_date, end_date)
 
 
+@mcp.tool
 def get_volume_weighted_average_price_tool(symbol: str, start_date: str, end_date: str) -> list[float]:
     """
     Computes the Volume Weighted Average Price (VWAP)
