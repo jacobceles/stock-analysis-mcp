@@ -3,7 +3,7 @@ import pytest
 
 from pytest_mock import MockerFixture
 
-from stock_analysis_mcp.services.stock_service import get_data, get_macd, get_rsi
+from stock_analysis_mcp.services.stock_service import get_data, get_macd, get_rsi, get_reddit_stock_news
 
 
 @pytest.fixture
@@ -50,3 +50,13 @@ def test_get_rsi(mocker: MockerFixture, mock_df: pd.DataFrame) -> None:
     res = get_rsi("AAPL", "2023-01-01", "2023-01-02")
     assert len(res) == 2
     assert res == [50.0, 55.0]
+
+
+def test_get_reddit_stock_news_exception(mocker: MockerFixture) -> None:
+    # Mock praw.Reddit to raise an exception
+    mocker.patch("praw.Reddit", side_effect=Exception("Mocked error"))
+
+    res = get_reddit_stock_news("AAPL")
+
+    assert len(res) == 1
+    assert res[0]["message"] == "Error fetching Reddit posts for AAPL: Mocked error"
