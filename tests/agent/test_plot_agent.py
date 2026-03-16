@@ -4,6 +4,7 @@ import os
 from unittest.mock import patch
 
 from google.adk.agents import LlmAgent
+from google.adk.models.lite_llm import LiteLlm
 
 import stock_analysis_mcp.agent.plot_agent
 
@@ -15,7 +16,9 @@ def test_generate_plot_code_agent_attributes() -> None:
     assert isinstance(generate_plot_code_agent, LlmAgent)
     assert generate_plot_code_agent.name == "generate_plot_agent"
     assert generate_plot_code_agent.output_schema == PlotDataOutput
-    assert "You are a candlestick plotting data agent" in generate_plot_code_agent.instruction
+    instruction = generate_plot_code_agent.instruction
+    assert isinstance(instruction, str)
+    assert "You are a candlestick plotting data agent" in instruction
 
 
 @patch.dict(os.environ, {"LITE_LLM_MODEL": "test-model", "LITE_LLM_API_KEY": "test-key"})
@@ -28,6 +31,7 @@ def test_generate_plot_code_agent_model_initialization() -> None:
 
         reloaded_agent = stock_analysis_mcp.agent.plot_agent.generate_plot_code_agent
 
+        assert isinstance(reloaded_agent.model, LiteLlm)
         assert reloaded_agent.model.model == "test-model"
         # api_key is not stored as an attribute on LiteLlm, so we just verify the model name was set correctly.
     finally:

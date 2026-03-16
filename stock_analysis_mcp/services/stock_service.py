@@ -1,6 +1,7 @@
 import logging
 import os
 
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Any
 
 import pandas as pd
@@ -14,6 +15,8 @@ from ta.volume import chaikin_money_flow, on_balance_volume, volume_weighted_ave
 
 from stock_analysis_mcp.core.constants import (
     DUMP_DIR,
+    REDDIT_BATCH_SIZE,
+    REDDIT_COMMENT_BATCH_SIZE,
     REDDIT_POST_LIMIT,
     REDDIT_SUBREDDITS,
 )
@@ -220,14 +223,23 @@ def get_reddit_stock_news(symbol: str, time_filter: str = "month") -> list[dict]
         posts = []
         search_query = f"{symbol} OR '${symbol}'"
 
-        for subreddit_name in REDDIT_SUBREDDITS:
+        def _fetch_subreddit(subreddit_name: str) -> list[dict]:
             try:
                 subreddit = reddit.subreddit(subreddit_name)
-                search_results = subreddit.search(search_query, limit=limit, time_filter=time_filter)
+                search_results = list(subreddit.search(search_query, limit=limit, time_filter=time_filter))
 
-                for post in search_results:
-                    comments = get_top_comments(post, 5)
-                    posts.append(
+                # Fetch comments in parallel batches
+                post_comments: dict[int, list[dict]] = {}
+                for i in range(0, len(search_results), REDDIT_COMMENT_BATCH_SIZE):
+                    batch = search_results[i : i + REDDIT_COMMENT_BATCH_SIZE]
+                    with ThreadPoolExecutor(max_workers=REDDIT_COMMENT_BATCH_SIZE) as comment_executor:
+                        future_to_idx = {comment_executor.submit(get_top_comments, post, 5): i + j for j, post in enumerate(batch)}
+                        for future in as_completed(future_to_idx):
+                            post_comments[future_to_idx[future]] = future.result()
+
+                results = []
+                for idx, post in enumerate(search_results):
+                    results.append(
                         {
                             "title": post.title,
                             "content": post.selftext[:500] + "..." if len(post.selftext) > 500 else post.selftext,
@@ -236,13 +248,22 @@ def get_reddit_stock_news(symbol: str, time_filter: str = "month") -> list[dict]
                             "subreddit": subreddit_name,
                             "created_utc": post.created_utc,
                             "num_comments": post.num_comments,
-                            "comments": comments,
+                            "comments": post_comments.get(idx, []),
                             "flair": post.link_flair_text if post.link_flair_text else "None",
                         }
                     )
+                return results
             except Exception as e:
                 logger.warning("Error fetching Reddit posts for %s: %s", symbol, e)
-                continue
+                return []
+
+        batch_size = min(REDDIT_BATCH_SIZE, len(REDDIT_SUBREDDITS))
+        for i in range(0, len(REDDIT_SUBREDDITS), batch_size):
+            batch = REDDIT_SUBREDDITS[i : i + batch_size]
+            with ThreadPoolExecutor(max_workers=batch_size) as executor:
+                futures = {executor.submit(_fetch_subreddit, name): name for name in batch}
+                for future in as_completed(futures):
+                    posts.extend(future.result())
 
         posts.sort(key=lambda x: x["score"], reverse=True)
         return posts[:limit]

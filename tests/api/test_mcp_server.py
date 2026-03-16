@@ -9,7 +9,6 @@ from pytest_mock import MockerFixture
 from starlette.testclient import TestClient
 
 from stock_analysis_mcp.api.mcp_server import (
-    mcp,
     _safe_eval,
     _safe_pow,
     get_chaikin_money_flow_tool,
@@ -27,6 +26,7 @@ from stock_analysis_mcp.api.mcp_server import (
     get_tsi_tool,
     get_volume_weighted_average_price_tool,
     health_check,
+    mcp,
     perform_calculation,
 )
 
@@ -87,7 +87,7 @@ def test_perform_calculation() -> None:
 async def test_health_check() -> None:
     request = MagicMock()
     response = await health_check(request)
-    assert json.loads(response.body) == {"status": "ok"}
+    assert json.loads(bytes(response.body)) == {"status": "ok"}
     assert response.status_code == 200
 
 
@@ -195,6 +195,7 @@ def test_mcp_http_app_health_endpoint() -> None:
     assert response.status_code == 200
     assert response.json() == {"status": "ok"}
 
+
 def test_mcp_server_main_execution(mocker: MockerFixture) -> None:
     # Use patch to mock fastmcp.FastMCP.run to prevent actual server start
     mock_run = mocker.patch("fastmcp.FastMCP.run")
@@ -202,8 +203,8 @@ def test_mcp_server_main_execution(mocker: MockerFixture) -> None:
     # We can use runpy to execute the module as __main__
     # Because runpy loads it cleanly, we need to patch os.environ directly
     # and use the mock on the imported module's class
-    import runpy
     import os
+    import runpy
 
     # Save original env
     orig_env = os.environ.get("HOST")
