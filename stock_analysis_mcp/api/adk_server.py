@@ -22,7 +22,7 @@ app.version = "1.0.0"
 # Remove default ADK routes that shadow our custom endpoints
 routes_to_keep = []
 for route in app.routes:
-    if getattr(route, 'path', '') in ['/health', '/']:
+    if getattr(route, "path", "") in ["/health", "/"]:
         continue
     routes_to_keep.append(route)
 app.router.routes = routes_to_keep

@@ -3,7 +3,7 @@ import pytest
 
 from pytest_mock import MockerFixture
 
-from stock_analysis_mcp.services.stock_service import get_data, get_macd, get_rsi, get_reddit_stock_news
+from stock_analysis_mcp.services.stock_service import get_data, get_macd, get_reddit_stock_news, get_rsi
 
 
 @pytest.fixture

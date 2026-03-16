@@ -1,6 +1,14 @@
+from unittest.mock import AsyncMock, MagicMock, patch
+
 import pytest
 
-from stock_analysis_mcp.agent.tools.plotting import get_sample_indices, normalize_plot_payload
+from google.adk.tools import ToolContext
+
+from stock_analysis_mcp.agent.tools.plotting import (
+    generate_plot_data_agent,
+    get_sample_indices,
+    normalize_plot_payload,
+)
 
 
 def test_normalize_plot_payload_dict() -> None:
@@ -51,3 +59,42 @@ def test_get_sample_indices_large() -> None:
     assert indices[-1] == n - 1
     assert sorted(indices) == indices
     assert len(set(indices)) == max_points
+
+
+@pytest.mark.asyncio
+async def test_generate_plot_data_agent_success() -> None:
+    data = "AAPL stock prices"
+    expected_output = {"x_values": ["2023-01-01"], "close": [150.0]}
+
+    mock_tool_context = MagicMock(spec=ToolContext)
+    mock_tool_context.state = {}
+
+    with patch("stock_analysis_mcp.agent.tools.plotting.AgentTool") as mock_agent_tool_class:
+        mock_instance = mock_agent_tool_class.return_value
+        mock_instance.run_async = AsyncMock(return_value=expected_output)
+
+        result = await generate_plot_data_agent(data, mock_tool_context)
+
+        assert result == expected_output
+        assert mock_tool_context.state["plot_code_output"] == expected_output
+        mock_agent_tool_class.assert_called_once()
+        mock_instance.run_async.assert_awaited_once_with(args={"request": data}, tool_context=mock_tool_context)
+
+
+@pytest.mark.asyncio
+async def test_generate_plot_data_agent_handles_error() -> None:
+    data = "invalid data"
+
+    mock_tool_context = MagicMock(spec=ToolContext)
+    mock_tool_context.state = {}
+
+    with patch("stock_analysis_mcp.agent.tools.plotting.AgentTool") as mock_agent_tool_class:
+        mock_instance = mock_agent_tool_class.return_value
+        mock_instance.run_async = AsyncMock(side_effect=Exception("API Error"))
+
+        with pytest.raises(Exception, match="API Error"):
+            await generate_plot_data_agent(data, mock_tool_context)
+
+        assert "plot_code_output" not in mock_tool_context.state
+        mock_agent_tool_class.assert_called_once()
+        mock_instance.run_async.assert_awaited_once_with(args={"request": data}, tool_context=mock_tool_context)
