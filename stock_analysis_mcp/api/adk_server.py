@@ -19,6 +19,14 @@ app.title = "Production ADK Agent - Stock MCP"
 app.description = ""
 app.version = "1.0.0"
 
+# Remove default ADK routes that shadow our custom endpoints
+routes_to_keep = []
+for route in app.routes:
+    if getattr(route, 'path', '') in ['/health', '/']:
+        continue
+    routes_to_keep.append(route)
+app.router.routes = routes_to_keep
+
 
 @app.get("/health")
 def health_check() -> dict[str, str]:
