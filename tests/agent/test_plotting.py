@@ -25,6 +25,11 @@ def test_normalize_plot_payload_invalid_json() -> None:
         normalize_plot_payload("{invalid}")
 
 
+def test_normalize_plot_payload_invalid_json_string() -> None:
+    with pytest.raises(ValueError, match="Invalid JSON input"):
+        normalize_plot_payload("invalid json")
+
+
 def test_normalize_plot_payload_invalid_type() -> None:
     with pytest.raises(TypeError, match="Payload must be a dict or JSON string"):
         normalize_plot_payload(123)
