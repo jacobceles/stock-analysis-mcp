@@ -194,3 +194,30 @@ def test_mcp_http_app_health_endpoint() -> None:
     response = client.get("/health")
     assert response.status_code == 200
     assert response.json() == {"status": "ok"}
+
+def test_mcp_server_main_execution(mocker: MockerFixture) -> None:
+    # Use patch to mock fastmcp.FastMCP.run to prevent actual server start
+    mock_run = mocker.patch("fastmcp.FastMCP.run")
+
+    # We can use runpy to execute the module as __main__
+    # Because runpy loads it cleanly, we need to patch os.environ directly
+    # and use the mock on the imported module's class
+    import runpy
+    import os
+
+    # Save original env
+    orig_env = os.environ.get("HOST")
+    os.environ["HOST"] = "0.0.0.0"
+
+    try:
+        # Run module
+        runpy.run_module("stock_analysis_mcp.api.mcp_server", run_name="__main__")
+
+        # Verify
+        mock_run.assert_called_once_with(transport="sse", host="0.0.0.0", port=8000)
+    finally:
+        # Restore env
+        if orig_env is None:
+            del os.environ["HOST"]
+        else:
+            os.environ["HOST"] = orig_env
