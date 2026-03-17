@@ -16,6 +16,28 @@ jobs:
         with:
           enable-cache: true
 
+      - name: Install system dependencies for PyQt6
+        run: |
+          sudo apt-get update && sudo apt-get install -y --no-install-recommends \
+            libgl1 \
+            libegl1 \
+            libopengl0 \
+            libglib2.0-0 \
+            libxkbcommon0 \
+            libdbus-1-3 \
+            libfontconfig1 \
+            libxcb-cursor0 \
+            libxcb-icccm4 \
+            libxcb-image0 \
+            libxcb-keysyms1 \
+            libxcb-render-util0 \
+            libxcb-shape0 \
+            libxcb-xfixes0 \
+            libxcb-xinerama0 \
+            libxcb-xkb1 \
+            libxrender1 \
+            libxi6
+
       - name: Install Python 3.14
         run: uv python install 3.14
 
