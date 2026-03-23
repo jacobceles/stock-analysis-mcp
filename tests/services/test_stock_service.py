@@ -15,8 +15,6 @@ def mock_df() -> pd.DataFrame:
     )
 
 
-
-
 @pytest.fixture(autouse=True)
 def clear_cache() -> Generator[None]:
     _get_data_internal.cache_clear()
