@@ -2,6 +2,7 @@ import logging
 import os
 
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from pathlib import Path
 from typing import Any
 
 import pandas as pd
@@ -38,11 +39,16 @@ def get_equity_metadata(symbol: str) -> dict:
 
 def get_data(symbol: str, start_date: str, end_date: str) -> pd.DataFrame:
     """Fetches historical price data for a given symbol using yfinance and caches it."""
-    os.makedirs(DUMP_DIR, exist_ok=True)
-    file_name = f"{symbol}_{start_date}_{end_date}.csv"
-    file_path = os.path.join(DUMP_DIR, file_name)
+    dump_dir = Path(DUMP_DIR).resolve()
+    dump_dir.mkdir(parents=True, exist_ok=True)
 
-    if os.path.exists(file_path):
+    file_name = f"{symbol}_{start_date}_{end_date}.csv"
+    file_path = (dump_dir / file_name).resolve()
+
+    if not file_path.is_relative_to(dump_dir):
+        raise ValueError("Invalid symbol or dates: path traversal detected")
+
+    if file_path.exists():
         return pd.read_csv(file_path)
 
     try:
