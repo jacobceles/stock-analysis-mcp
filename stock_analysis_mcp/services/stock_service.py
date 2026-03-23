@@ -211,6 +211,11 @@ def get_volume_weighted_average_price(symbol: str, start_date: str, end_date: st
     ).tolist()
 
 
+def _truncate_text(text: str, limit: int = 500) -> str:
+    """Helper function to truncate text to a specified limit, appending '...' if truncated."""
+    return text[:limit] + "..." if len(text) > limit else text
+
+
 def get_reddit_stock_news(symbol: str, time_filter: str = "month") -> list[dict]:
     try:
         reddit_client_id = os.environ.get("REDDIT_CLIENT_ID")
@@ -242,7 +247,7 @@ def get_reddit_stock_news(symbol: str, time_filter: str = "month") -> list[dict]
                     results.append(
                         {
                             "title": post.title,
-                            "content": post.selftext[:500] + "..." if len(post.selftext) > 500 else post.selftext,
+                            "content": _truncate_text(post.selftext, 500),
                             "url": f"https://reddit.com{post.permalink}",
                             "score": post.score,
                             "subreddit": subreddit_name,
@@ -281,7 +286,7 @@ def get_top_comments(post: Submission, limit: int = 3) -> list[dict[str, Any]]:
         comments.append(
             {
                 "author": str(comment.author),
-                "body": comment.body[:500] + "..." if len(comment.body) > 500 else comment.body,
+                "body": _truncate_text(comment.body, 500),
                 "score": comment.score,
             }
         )
