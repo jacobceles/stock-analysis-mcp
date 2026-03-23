@@ -92,10 +92,7 @@ def test_get_reddit_stock_news_success(mocker: MockerFixture) -> None:
 
     mocker.patch("praw.Reddit", return_value=mock_reddit_instance)
 
-    mocker.patch(
-        "stock_analysis_mcp.services.stock_service.get_top_comments",
-        return_value=[{"author": "user1", "body": "comment 1", "score": 10}]
-    )
+    mocker.patch("stock_analysis_mcp.services.stock_service.get_top_comments", return_value=[{"author": "user1", "body": "comment 1", "score": 10}])
 
     mocker.patch("stock_analysis_mcp.services.stock_service.REDDIT_SUBREDDITS", ["TestSubreddit"])
 
@@ -144,16 +141,10 @@ def test_get_reddit_stock_news_fetch_subreddit_exception(mocker: MockerFixture) 
 
     mocker.patch("praw.Reddit", return_value=mock_reddit_instance)
 
-    mocker.patch(
-        "stock_analysis_mcp.services.stock_service.get_top_comments",
-        return_value=[]
-    )
+    mocker.patch("stock_analysis_mcp.services.stock_service.get_top_comments", return_value=[])
 
     # Use two subreddits: one succeeds, one fails
-    mocker.patch(
-        "stock_analysis_mcp.services.stock_service.REDDIT_SUBREDDITS",
-        ["GoodSubreddit", "FailSubreddit"]
-    )
+    mocker.patch("stock_analysis_mcp.services.stock_service.REDDIT_SUBREDDITS", ["GoodSubreddit", "FailSubreddit"])
 
     res = get_reddit_stock_news("AAPL")
 
