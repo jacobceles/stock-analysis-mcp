@@ -70,3 +70,62 @@ def test_get_reddit_stock_news_exception(mocker: MockerFixture) -> None:
 
     assert len(res) == 1
     assert res[0]["message"] == "Error fetching Reddit posts for AAPL: Mocked error"
+
+def test_get_top_comments_success(mocker: MockerFixture) -> None:
+    from stock_analysis_mcp.services.stock_service import get_top_comments
+    mock_submission = mocker.MagicMock()
+    mock_comment1 = mocker.MagicMock()
+    mock_comment1.author = "Author 1"
+    mock_comment1.body = "Comment 1"
+    mock_comment1.score = 10
+    mock_comment2 = mocker.MagicMock()
+    mock_comment2.author = "Author 2"
+    mock_comment2.body = "Comment 2"
+    mock_comment2.score = 20
+
+    mock_comments_list = [mock_comment1, mock_comment2]
+    # In python magicmock len() is 0 by default. So we need to mock __len__
+    mock_submission.comments.__len__.return_value = len(mock_comments_list)
+    mock_submission.comments.__getitem__.side_effect = lambda i: mock_comments_list[i]
+    mock_submission.comments.replace_more = mocker.MagicMock()
+
+    comments = get_top_comments(mock_submission, limit=1)
+
+    mock_submission.comments.replace_more.assert_called_once_with(limit=0)
+    assert len(comments) == 1
+    assert comments[0]["body"] == "Comment 1"
+    assert comments[0]["score"] == 10
+
+def test_get_top_comments_exceeds_limit(mocker: MockerFixture) -> None:
+    from stock_analysis_mcp.services.stock_service import get_top_comments
+    mock_submission = mocker.MagicMock()
+    mock_comment1 = mocker.MagicMock()
+    mock_comment1.author = "Author 1"
+    mock_comment1.body = "Comment 1"
+    mock_comment1.score = 10
+
+    mock_comments_list = [mock_comment1]
+    mock_submission.comments.__len__.return_value = len(mock_comments_list)
+    mock_submission.comments.__getitem__.side_effect = lambda i: mock_comments_list[i]
+    mock_submission.comments.replace_more = mocker.MagicMock()
+
+    comments = get_top_comments(mock_submission, limit=3)
+
+    mock_submission.comments.replace_more.assert_called_once_with(limit=0)
+    assert len(comments) == 1
+    assert comments[0]["body"] == "Comment 1"
+    assert comments[0]["score"] == 10
+
+def test_get_top_comments_empty(mocker: MockerFixture) -> None:
+    from stock_analysis_mcp.services.stock_service import get_top_comments
+    mock_submission = mocker.MagicMock()
+
+    mock_comments_list = []
+    mock_submission.comments.__len__.return_value = len(mock_comments_list)
+    mock_submission.comments.__getitem__.side_effect = lambda i: mock_comments_list[i]
+    mock_submission.comments.replace_more = mocker.MagicMock()
+
+    comments = get_top_comments(mock_submission, limit=3)
+
+    mock_submission.comments.replace_more.assert_called_once_with(limit=0)
+    assert len(comments) == 0
