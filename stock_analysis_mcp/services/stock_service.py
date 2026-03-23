@@ -1,3 +1,4 @@
+import functools
 import logging
 import os
 
@@ -36,8 +37,9 @@ def get_equity_metadata(symbol: str) -> dict:
         return {}
 
 
-def get_data(symbol: str, start_date: str, end_date: str) -> pd.DataFrame:
-    """Fetches historical price data for a given symbol using yfinance and caches it."""
+@functools.lru_cache(maxsize=32)
+def _get_data_internal(symbol: str, start_date: str, end_date: str) -> pd.DataFrame:
+    """Internal function to fetch historical price data and cache it in memory."""
     os.makedirs(DUMP_DIR, exist_ok=True)
     file_name = f"{symbol}_{start_date}_{end_date}.csv"
     file_path = os.path.join(DUMP_DIR, file_name)
@@ -78,6 +80,11 @@ def get_data(symbol: str, start_date: str, end_date: str) -> pd.DataFrame:
     except Exception as e:
         logger.error("Error fetching data for %s: %s", symbol, e)
         return pd.DataFrame()
+
+
+def get_data(symbol: str, start_date: str, end_date: str) -> pd.DataFrame:
+    """Fetches historical price data for a given symbol using yfinance and caches it."""
+    return _get_data_internal(symbol, start_date, end_date).copy()
 
 
 def get_macd(symbol: str, start_date: str, end_date: str) -> list[float]:
