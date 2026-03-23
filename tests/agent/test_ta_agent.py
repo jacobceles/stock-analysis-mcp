@@ -16,6 +16,7 @@ def test_exit_loop_with_actions():
     assert result == {}
     assert mock_context.actions.escalate is True
 
+
 def test_exit_loop_missing_actions():
     """Test exit_loop raises AttributeError when actions is missing."""
     mock_context = MagicMock(spec=ToolContext)
