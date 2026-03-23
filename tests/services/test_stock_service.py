@@ -71,8 +71,10 @@ def test_get_reddit_stock_news_exception(mocker: MockerFixture) -> None:
     assert len(res) == 1
     assert res[0]["message"] == "Error fetching Reddit posts for AAPL: Mocked error"
 
+
 def test_get_top_comments_success(mocker: MockerFixture) -> None:
     from stock_analysis_mcp.services.stock_service import get_top_comments
+
     mock_submission = mocker.MagicMock()
     mock_comment1 = mocker.MagicMock()
     mock_comment1.author = "Author 1"
@@ -96,8 +98,10 @@ def test_get_top_comments_success(mocker: MockerFixture) -> None:
     assert comments[0]["body"] == "Comment 1"
     assert comments[0]["score"] == 10
 
+
 def test_get_top_comments_exceeds_limit(mocker: MockerFixture) -> None:
     from stock_analysis_mcp.services.stock_service import get_top_comments
+
     mock_submission = mocker.MagicMock()
     mock_comment1 = mocker.MagicMock()
     mock_comment1.author = "Author 1"
@@ -116,8 +120,10 @@ def test_get_top_comments_exceeds_limit(mocker: MockerFixture) -> None:
     assert comments[0]["body"] == "Comment 1"
     assert comments[0]["score"] == 10
 
+
 def test_get_top_comments_empty(mocker: MockerFixture) -> None:
     from stock_analysis_mcp.services.stock_service import get_top_comments
+
     mock_submission = mocker.MagicMock()
 
     mock_comments_list = []
