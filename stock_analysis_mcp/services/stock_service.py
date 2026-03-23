@@ -277,9 +277,9 @@ def get_top_comments(post: Submission, limit: int = 3) -> list[dict[str, Any]]:
     post.comments.replace_more(limit=0)
     return [
         {
-            "author": str(comment.author),
-            "body": comment.body[:500] + "..." if len(comment.body) > 500 else comment.body,
-            "score": comment.score,
+            "author": str(getattr(comment, "author", "")),
+            "body": getattr(comment, "body", "")[:500] + "..." if len(getattr(comment, "body", "")) > 500 else getattr(comment, "body", ""),
+            "score": getattr(comment, "score", 0),
         }
-        for comment in post.comments[:limit]
+        for comment in post.comments.list()[:limit]
     ]
