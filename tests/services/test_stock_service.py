@@ -3,7 +3,7 @@ import pytest
 
 from pytest_mock import MockerFixture
 
-from stock_analysis_mcp.services.stock_service import get_data, get_macd, get_reddit_stock_news, get_rsi
+from stock_analysis_mcp.services.stock_service import get_data, get_equity_metadata, get_macd, get_reddit_stock_news, get_rsi
 
 
 @pytest.fixture
@@ -60,6 +60,25 @@ def test_get_rsi(mocker: MockerFixture, mock_df: pd.DataFrame) -> None:
     res = get_rsi("AAPL", "2023-01-01", "2023-01-02")
     assert len(res) == 2
     assert res == [50.0, 55.0]
+
+
+def test_get_equity_metadata_success(mocker: MockerFixture) -> None:
+    mock_info = {"shortName": "Apple Inc.", "sector": "Technology"}
+
+    mock_ticker = mocker.MagicMock()
+    mock_ticker.info = mock_info
+    mocker.patch("yfinance.Ticker", return_value=mock_ticker)
+
+    res = get_equity_metadata("AAPL")
+    assert res == mock_info
+    assert res["shortName"] == "Apple Inc."
+
+
+def test_get_equity_metadata_exception(mocker: MockerFixture) -> None:
+    mocker.patch("yfinance.Ticker", side_effect=Exception("API Error"))
+
+    res = get_equity_metadata("INVALID")
+    assert res == {}
 
 
 def test_get_reddit_stock_news_exception(mocker: MockerFixture) -> None:
