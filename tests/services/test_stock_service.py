@@ -1,3 +1,5 @@
+from unittest.mock import MagicMock
+
 import pandas as pd
 import pytest
 
@@ -61,8 +63,6 @@ def test_get_rsi(mocker: MockerFixture, mock_df: pd.DataFrame) -> None:
     assert len(res) == 2
     assert res == [50.0, 55.0]
 
-
-from unittest.mock import MagicMock
 
 def test_get_reddit_stock_news_success(mocker: MockerFixture) -> None:
     # Setup mock posts
