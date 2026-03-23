@@ -1,3 +1,5 @@
+from collections.abc import Generator
+
 import pandas as pd
 import pytest
 
@@ -15,10 +17,8 @@ def mock_df() -> pd.DataFrame:
 
 
 
-from typing import Generator
-
 @pytest.fixture(autouse=True)
-def clear_cache() -> Generator[None, None, None]:
+def clear_cache() -> Generator[None]:
     _get_data_internal.cache_clear()
     yield
     _get_data_internal.cache_clear()
