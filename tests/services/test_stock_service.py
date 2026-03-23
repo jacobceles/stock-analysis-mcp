@@ -1,3 +1,5 @@
+from typing import Any
+
 import pandas as pd
 import pytest
 
@@ -126,7 +128,7 @@ def test_get_top_comments_empty(mocker: MockerFixture) -> None:
 
     mock_submission = mocker.MagicMock()
 
-    mock_comments_list = []
+    mock_comments_list: list[Any] = []
     mock_submission.comments.__len__.return_value = len(mock_comments_list)
     mock_submission.comments.__getitem__.side_effect = lambda i: mock_comments_list[i]
     mock_submission.comments.replace_more = mocker.MagicMock()
