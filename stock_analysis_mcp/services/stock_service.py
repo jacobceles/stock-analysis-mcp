@@ -10,6 +10,7 @@ import yfinance as yf  # type: ignore
 
 from praw.models import Submission  # type: ignore
 from ta.momentum import roc, rsi, stoch, tsi  # type: ignore
+import ta.trend  # type: ignore
 from ta.trend import adx, aroon_down, aroon_up, ema_indicator, ichimoku_a, ichimoku_b, macd, psar_down, psar_up  # type: ignore
 from ta.volume import chaikin_money_flow, on_balance_volume, volume_weighted_average_price  # type: ignore
 
@@ -154,7 +155,8 @@ def get_psar_up(symbol: str, start_date: str, end_date: str) -> list[float]:
     df = get_data(symbol, start_date, end_date)
     if df.empty:
         return []
-    return psar_up(df.High, df.Low, df.Close, fillna=True).tolist()
+    psar = ta.trend.PSARIndicator(high=df['High'], low=df['Low'], close=df['Close'])
+    return psar.psar_up().dropna().tolist()
 
 
 def get_psar_down(symbol: str, start_date: str, end_date: str) -> list[float]:
@@ -228,14 +230,12 @@ def get_reddit_stock_news(symbol: str, time_filter: str = "month") -> list[dict]
                 subreddit = reddit.subreddit(subreddit_name)
                 search_results = list(subreddit.search(search_query, limit=limit, time_filter=time_filter))
 
-                # Fetch comments in parallel batches
+                # Fetch comments in parallel
                 post_comments: dict[int, list[dict]] = {}
-                for i in range(0, len(search_results), REDDIT_COMMENT_BATCH_SIZE):
-                    batch = search_results[i : i + REDDIT_COMMENT_BATCH_SIZE]
-                    with ThreadPoolExecutor(max_workers=REDDIT_COMMENT_BATCH_SIZE) as comment_executor:
-                        future_to_idx = {comment_executor.submit(get_top_comments, post, 5): i + j for j, post in enumerate(batch)}
-                        for future in as_completed(future_to_idx):
-                            post_comments[future_to_idx[future]] = future.result()
+                with ThreadPoolExecutor(max_workers=REDDIT_COMMENT_BATCH_SIZE) as comment_executor:
+                    future_to_idx = {comment_executor.submit(get_top_comments, post, 5): idx for idx, post in enumerate(search_results)}
+                    for future in as_completed(future_to_idx):
+                        post_comments[future_to_idx[future]] = future.result()
 
                 results = []
                 for idx, post in enumerate(search_results):

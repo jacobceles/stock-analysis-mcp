@@ -3,7 +3,7 @@
 all: setup format lint typecheck test
 
 setup:
-	uv sync --all-packages
+	uv sync --all-groups
 	if [ -d .git ]; then uv run pre-commit install; fi
 
 format:
