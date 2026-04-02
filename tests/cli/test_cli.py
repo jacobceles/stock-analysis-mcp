@@ -126,7 +126,7 @@ class TestMainOutput:
         result = json.loads(output)
         assert result == 5.0
 
-    @patch("stock_analysis_mcp.cli.get_equity_metadata")
+    @patch("stock_analysis_mcp.services.stock_service.get_equity_metadata")
     def test_metadata_json_output(self, mock_metadata: object) -> None:
         mock_metadata.return_value = {"symbol": "AAPL", "sector": "Technology"}  # type: ignore
         output = self._capture_output(["metadata", "AAPL"])
@@ -134,21 +134,21 @@ class TestMainOutput:
         assert result["symbol"] == "AAPL"
         assert result["sector"] == "Technology"
 
-    @patch("stock_analysis_mcp.cli.get_rsi")
+    @patch("stock_analysis_mcp.services.stock_service.get_rsi")
     def test_rsi_json_output(self, mock_rsi: object) -> None:
         mock_rsi.return_value = [50.0, 55.0, 60.0]  # type: ignore
         output = self._capture_output(["rsi", "AAPL", "--start", "2025-01-01", "--end", "2025-03-31"])
         result = json.loads(output)
         assert result == [50.0, 55.0, 60.0]
 
-    @patch("stock_analysis_mcp.cli.get_macd")
+    @patch("stock_analysis_mcp.services.stock_service.get_macd")
     def test_macd_json_output(self, mock_macd: object) -> None:
         mock_macd.return_value = [1.0, 2.0, 3.0]  # type: ignore
         output = self._capture_output(["macd", "AAPL", "--start", "2025-01-01", "--end", "2025-03-31"])
         result = json.loads(output)
         assert result == [1.0, 2.0, 3.0]
 
-    @patch("stock_analysis_mcp.cli.get_data")
+    @patch("stock_analysis_mcp.services.stock_service.get_data")
     def test_history_json_output(self, mock_data: object) -> None:
         df = pd.DataFrame({"Open": [100.0], "Close": [105.0]})
         mock_data.return_value = df  # type: ignore
@@ -156,7 +156,7 @@ class TestMainOutput:
         result = json.loads(output)
         assert isinstance(result, list)
 
-    @patch("stock_analysis_mcp.cli.get_reddit_stock_news")
+    @patch("stock_analysis_mcp.services.stock_service.get_reddit_stock_news")
     def test_reddit_json_output(self, mock_reddit: object) -> None:
         mock_reddit.return_value = [{"title": "AAPL to the moon", "score": 42}]  # type: ignore
         output = self._capture_output(["reddit", "AAPL", "--time-filter", "week"])
@@ -164,14 +164,14 @@ class TestMainOutput:
         assert len(result) == 1
         assert result[0]["title"] == "AAPL to the moon"
 
-    @patch("stock_analysis_mcp.cli.get_stoch")
+    @patch("stock_analysis_mcp.services.stock_service.get_stoch")
     def test_stoch_passes_windows(self, mock_stoch: object) -> None:
         mock_stoch.return_value = [50.0]  # type: ignore
         self._capture_output(["stoch", "AAPL", "--start", "2025-01-01", "--end", "2025-03-31", "--window", "20", "--smooth-window", "5"])
         mock_stoch.assert_called_once_with("AAPL", "2025-01-01", "2025-03-31", 20, 5)  # type: ignore
 
     def test_error_outputs_json(self) -> None:
-        with patch("stock_analysis_mcp.cli.get_equity_metadata", side_effect=RuntimeError("test error")):
+        with patch("stock_analysis_mcp.services.stock_service.get_equity_metadata", side_effect=RuntimeError("test error")):
             captured = StringIO()
             old_stdout = sys.stdout
             sys.stdout = captured

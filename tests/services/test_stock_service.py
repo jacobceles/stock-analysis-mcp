@@ -8,7 +8,7 @@ import pytest
 from pytest_mock import MockerFixture
 
 from stock_analysis_mcp.services.stock_service import (
-    _get_data_internal,
+    clear_cache,
     get_adx,
     get_aroon_down,
     get_aroon_up,
@@ -39,10 +39,10 @@ def mock_df() -> pd.DataFrame:
 
 
 @pytest.fixture(autouse=True)
-def clear_cache() -> Generator[None]:
-    _get_data_internal.cache_clear()
+def _clear_data_cache() -> Generator[None]:
+    clear_cache()
     yield
-    _get_data_internal.cache_clear()
+    clear_cache()
 
 
 def test_get_data_empty(mocker: MockerFixture) -> None:

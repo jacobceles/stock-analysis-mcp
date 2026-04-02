@@ -7,14 +7,11 @@ import uuid
 
 from typing import Any
 
-import finplot as fplt  # type:ignore
 import google.genai.types as types
 import pandas as pd
 
 from google.adk.tools import ToolContext
 from google.adk.tools.agent_tool import AgentTool
-from PyQt6.QtCore import QTimer
-from PyQt6.QtWidgets import QApplication
 
 from stock_analysis_mcp.agent.plot_agent import generate_plot_code_agent
 from stock_analysis_mcp.core.logging_config import setup_logging
@@ -36,6 +33,12 @@ async def generate_plot_data_agent(data: str, tool_context: ToolContext) -> dict
 
 async def generate_plot(tool_context: ToolContext) -> bool:
     """Plots equity data and saves it as an artifact."""
+    # Lazy-import finplot and PyQt6 to avoid loading heavy GUI deps at module level
+    import finplot as fplt  # type: ignore
+
+    from PyQt6.QtCore import QTimer
+    from PyQt6.QtWidgets import QApplication
+
     plot_data_raw = tool_context.state.get("plot_code_output", "")
     plot_data = normalize_plot_payload(plot_data_raw)
 
@@ -92,9 +95,7 @@ async def generate_plot(tool_context: ToolContext) -> bool:
             ax = ax[0]
 
         # Plot candlestick
-        # finplot candlestick expects a DataFrame with columns: [Open, Close, High, Low] in that order or OHLC
         fplt.candlestick_ochl(df[["Open", "Close", "High", "Low"]])
-        # Set y-axis label on the left (finplot often defaults to right for price)
         ax.setLabel("left", ylabel)
 
         buf = io.BytesIO()

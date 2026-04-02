@@ -1,4 +1,3 @@
-import functools
 import logging
 import os
 
@@ -19,7 +18,6 @@ from ta.volume import chaikin_money_flow, on_balance_volume, volume_weighted_ave
 from stock_analysis_mcp.core.constants import (
     DUMP_DIR,
     REDDIT_BATCH_SIZE,
-    REDDIT_COMMENT_BATCH_SIZE,
     REDDIT_POST_LIMIT,
     REDDIT_SUBREDDITS,
 )
@@ -27,6 +25,14 @@ from stock_analysis_mcp.core.logging_config import setup_logging
 
 setup_logging()
 logger = logging.getLogger(__name__)
+
+# Manual cache that skips empty DataFrames (errors/missing data are not cached)
+_data_cache: dict[tuple[str, str, str], pd.DataFrame] = {}
+
+
+def clear_cache() -> None:
+    """Clear the data cache. Useful for testing."""
+    _data_cache.clear()
 
 
 def get_equity_metadata(symbol: str) -> dict:
@@ -39,9 +45,12 @@ def get_equity_metadata(symbol: str) -> dict:
         return {}
 
 
-@functools.lru_cache(maxsize=32)
 def _get_data_internal(symbol: str, start_date: str, end_date: str) -> pd.DataFrame:
-    """Internal function to fetch and cache historical price data."""
+    """Internal function to fetch and cache historical price data. Only successful fetches are cached."""
+    key = (symbol, start_date, end_date)
+    if key in _data_cache:
+        return _data_cache[key]
+
     dump_dir = Path(DUMP_DIR).resolve()
     os.makedirs(dump_dir, exist_ok=True)
     file_name = f"{symbol}_{start_date}_{end_date}.csv"
@@ -51,7 +60,9 @@ def _get_data_internal(symbol: str, start_date: str, end_date: str) -> pd.DataFr
         raise ValueError("Invalid symbol or dates: path traversal detected")
 
     if file_path.exists():
-        return pd.read_csv(file_path)
+        df = pd.read_csv(file_path)
+        _data_cache[key] = df
+        return df
 
     try:
         logger.info("Fetching data for %s from %s to %s", symbol, start_date, end_date)
@@ -66,21 +77,10 @@ def _get_data_internal(symbol: str, start_date: str, end_date: str) -> pd.DataFr
             df.columns = df.columns.get_level_values(0)
 
         df = df.reset_index()
-
-        # Normalize column names
-        df = df.rename(
-            columns={
-                "Date": "Date",
-                "Open": "Open",
-                "High": "High",
-                "Low": "Low",
-                "Close": "Close",
-                "Adj Close": "Adj_Close",
-                "Volume": "Volume",
-            }
-        )
+        df = df.rename(columns={"Adj Close": "Adj_Close"})
 
         df.to_csv(file_path, index=False)
+        _data_cache[key] = df
         return df
 
     except Exception as e:
@@ -89,8 +89,8 @@ def _get_data_internal(symbol: str, start_date: str, end_date: str) -> pd.DataFr
 
 
 def get_data(symbol: str, start_date: str, end_date: str) -> pd.DataFrame:
-    """Fetches historical price data and returns a copy to prevent shared state issues."""
-    return _get_data_internal(symbol, start_date, end_date).copy()
+    """Fetches historical price data. Returns cached data directly (read-only)."""
+    return _get_data_internal(symbol, start_date, end_date)
 
 
 def get_macd(symbol: str, start_date: str, end_date: str) -> list[float]:
@@ -242,42 +242,42 @@ def get_reddit_stock_news(symbol: str, time_filter: str = "month") -> list[dict]
         posts = []
         search_query = f"{symbol} OR '${symbol}'"
 
-        def _fetch_subreddit(subreddit_name: str) -> list[dict]:
-            try:
-                subreddit = reddit.subreddit(subreddit_name)
-                search_results = list(subreddit.search(search_query, limit=limit, time_filter=time_filter))
+        # Single executor reused for all subreddit fetching and comment fetching
+        with ThreadPoolExecutor(max_workers=REDDIT_BATCH_SIZE) as executor:
 
-                # Fetch comments in parallel
-                post_comments: dict[int, list[dict]] = {}
-                with ThreadPoolExecutor(max_workers=REDDIT_COMMENT_BATCH_SIZE) as comment_executor:
-                    future_to_idx = {comment_executor.submit(get_top_comments, post, 5): idx for idx, post in enumerate(search_results)}
-                    for future in as_completed(future_to_idx):
-                        post_comments[future_to_idx[future]] = future.result()
+            def _fetch_subreddit(subreddit_name: str) -> list[dict]:
+                try:
+                    subreddit = reddit.subreddit(subreddit_name)
+                    search_results = list(subreddit.search(search_query, limit=limit, time_filter=time_filter))
 
-                results = []
-                for idx, post in enumerate(search_results):
-                    results.append(
-                        {
-                            "title": post.title,
-                            "content": _truncate_text(post.selftext, 500),
-                            "url": f"https://reddit.com{post.permalink}",
-                            "score": post.score,
-                            "subreddit": subreddit_name,
-                            "created_utc": post.created_utc,
-                            "num_comments": post.num_comments,
-                            "comments": post_comments.get(idx, []),
-                            "flair": post.link_flair_text if post.link_flair_text else "None",
-                        }
-                    )
-                return results
-            except Exception as e:
-                logger.warning("Error fetching Reddit posts for %s: %s", symbol, e)
-                return []
+                    # Fetch comments using the shared executor
+                    post_comments: dict[int, list[dict]] = {}
+                    comment_futures = {executor.submit(get_top_comments, post, 5): idx for idx, post in enumerate(search_results)}
+                    for future in as_completed(comment_futures):
+                        post_comments[comment_futures[future]] = future.result()
 
-        batch_size = min(REDDIT_BATCH_SIZE, len(REDDIT_SUBREDDITS))
-        for i in range(0, len(REDDIT_SUBREDDITS), batch_size):
-            batch = REDDIT_SUBREDDITS[i : i + batch_size]
-            with ThreadPoolExecutor(max_workers=batch_size) as executor:
+                    results = []
+                    for idx, post in enumerate(search_results):
+                        results.append(
+                            {
+                                "title": post.title,
+                                "content": _truncate_text(post.selftext, 500),
+                                "url": f"https://reddit.com{post.permalink}",
+                                "score": post.score,
+                                "subreddit": subreddit_name,
+                                "created_utc": post.created_utc,
+                                "num_comments": post.num_comments,
+                                "comments": post_comments.get(idx, []),
+                                "flair": post.link_flair_text if post.link_flair_text else "None",
+                            }
+                        )
+                    return results
+                except Exception as e:
+                    logger.warning("Error fetching Reddit posts for %s: %s", symbol, e)
+                    return []
+
+            for i in range(0, len(REDDIT_SUBREDDITS), REDDIT_BATCH_SIZE):
+                batch = REDDIT_SUBREDDITS[i : i + REDDIT_BATCH_SIZE]
                 futures = {executor.submit(_fetch_subreddit, name): name for name in batch}
                 for future in as_completed(futures):
                     posts.extend(future.result())

@@ -5,14 +5,14 @@ from collections.abc import Generator
 
 import pytest
 
-from stock_analysis_mcp.services.stock_service import _get_data_internal, get_data
+from stock_analysis_mcp.services.stock_service import clear_cache, get_data
 
 
 @pytest.fixture(autouse=True)
-def clear_cache() -> Generator[None]:
-    _get_data_internal.cache_clear()
+def _clear_data_cache() -> Generator[None]:
+    clear_cache()
     yield
-    _get_data_internal.cache_clear()
+    clear_cache()
 
 
 def test_get_data_path_traversal() -> None:

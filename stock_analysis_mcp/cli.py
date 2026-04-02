@@ -8,28 +8,6 @@ import sys
 from collections.abc import Callable
 from typing import Any
 
-from stock_analysis_mcp.services.stock_service import (
-    get_adx,
-    get_aroon_down,
-    get_aroon_up,
-    get_chaikin_money_flow,
-    get_data,
-    get_ema,
-    get_equity_metadata,
-    get_ichimoku_a,
-    get_ichimoku_b,
-    get_macd,
-    get_on_balance_volume,
-    get_psar_down,
-    get_psar_up,
-    get_reddit_stock_news,
-    get_roc,
-    get_rsi,
-    get_stoch,
-    get_tsi,
-    get_volume_weighted_average_price,
-)
-
 
 def _safe_pow(base: float, exp: float) -> float:
     if abs(exp) > 1000:
@@ -148,24 +126,45 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-_INDICATOR_DISPATCH: dict[str, Callable[..., Any]] = {
-    "macd": lambda args: get_macd(args.symbol, args.start, args.end),
-    "rsi": lambda args: get_rsi(args.symbol, args.start, args.end),
-    "tsi": lambda args: get_tsi(args.symbol, args.start, args.end),
-    "stoch": lambda args: get_stoch(args.symbol, args.start, args.end, args.window, args.smooth_window),
-    "roc": lambda args: get_roc(args.symbol, args.start, args.end, args.window),
-    "ema": lambda args: get_ema(args.symbol, args.start, args.end, args.window),
-    "ichimoku-a": lambda args: get_ichimoku_a(args.symbol, args.start, args.end),
-    "ichimoku-b": lambda args: get_ichimoku_b(args.symbol, args.start, args.end),
-    "adx": lambda args: get_adx(args.symbol, args.start, args.end),
-    "psar-up": lambda args: get_psar_up(args.symbol, args.start, args.end),
-    "psar-down": lambda args: get_psar_down(args.symbol, args.start, args.end),
-    "aroon-up": lambda args: get_aroon_up(args.symbol, args.start, args.end),
-    "aroon-down": lambda args: get_aroon_down(args.symbol, args.start, args.end),
-    "obv": lambda args: get_on_balance_volume(args.symbol, args.start, args.end),
-    "cmf": lambda args: get_chaikin_money_flow(args.symbol, args.start, args.end),
-    "vwap": lambda args: get_volume_weighted_average_price(args.symbol, args.start, args.end),
-}
+def _get_service_functions() -> dict[str, Callable[..., Any]]:
+    """Lazy-import service functions only when needed (avoids loading yfinance/pandas/praw on startup)."""
+    from stock_analysis_mcp.services.stock_service import (
+        get_adx,
+        get_aroon_down,
+        get_aroon_up,
+        get_chaikin_money_flow,
+        get_ema,
+        get_ichimoku_a,
+        get_ichimoku_b,
+        get_macd,
+        get_on_balance_volume,
+        get_psar_down,
+        get_psar_up,
+        get_roc,
+        get_rsi,
+        get_stoch,
+        get_tsi,
+        get_volume_weighted_average_price,
+    )
+
+    return {
+        "macd": lambda args: get_macd(args.symbol, args.start, args.end),
+        "rsi": lambda args: get_rsi(args.symbol, args.start, args.end),
+        "tsi": lambda args: get_tsi(args.symbol, args.start, args.end),
+        "stoch": lambda args: get_stoch(args.symbol, args.start, args.end, args.window, args.smooth_window),
+        "roc": lambda args: get_roc(args.symbol, args.start, args.end, args.window),
+        "ema": lambda args: get_ema(args.symbol, args.start, args.end, args.window),
+        "ichimoku-a": lambda args: get_ichimoku_a(args.symbol, args.start, args.end),
+        "ichimoku-b": lambda args: get_ichimoku_b(args.symbol, args.start, args.end),
+        "adx": lambda args: get_adx(args.symbol, args.start, args.end),
+        "psar-up": lambda args: get_psar_up(args.symbol, args.start, args.end),
+        "psar-down": lambda args: get_psar_down(args.symbol, args.start, args.end),
+        "aroon-up": lambda args: get_aroon_up(args.symbol, args.start, args.end),
+        "aroon-down": lambda args: get_aroon_down(args.symbol, args.start, args.end),
+        "obv": lambda args: get_on_balance_volume(args.symbol, args.start, args.end),
+        "cmf": lambda args: get_chaikin_money_flow(args.symbol, args.start, args.end),
+        "vwap": lambda args: get_volume_weighted_average_price(args.symbol, args.start, args.end),
+    }
 
 
 def main(argv: list[str] | None = None) -> None:
@@ -173,19 +172,25 @@ def main(argv: list[str] | None = None) -> None:
     args = parser.parse_args(argv)
 
     try:
-        if args.command == "metadata":
-            _output_json(get_equity_metadata(args.symbol))
-        elif args.command == "history":
-            _output_json(get_data(args.symbol, args.start, args.end).values.tolist())
-        elif args.command == "reddit":
-            _output_json(get_reddit_stock_news(args.symbol, args.time_filter))
-        elif args.command == "calc":
+        if args.command == "calc":
             _output_json(perform_calculation(args.equation))
-        elif args.command in _INDICATOR_DISPATCH:
-            _output_json(_INDICATOR_DISPATCH[args.command](args))
         else:
-            parser.print_help()
-            sys.exit(1)
+            # Lazy-import heavy dependencies only for non-calc commands
+            from stock_analysis_mcp.services.stock_service import get_data, get_equity_metadata, get_reddit_stock_news
+
+            if args.command == "metadata":
+                _output_json(get_equity_metadata(args.symbol))
+            elif args.command == "history":
+                _output_json(get_data(args.symbol, args.start, args.end).values.tolist())
+            elif args.command == "reddit":
+                _output_json(get_reddit_stock_news(args.symbol, args.time_filter))
+            else:
+                dispatch = _get_service_functions()
+                if args.command in dispatch:
+                    _output_json(dispatch[args.command](args))
+                else:
+                    parser.print_help()
+                    sys.exit(1)
     except Exception as e:
         _output_json({"error": str(e)})
         sys.exit(1)
