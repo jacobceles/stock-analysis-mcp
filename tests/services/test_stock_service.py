@@ -3,7 +3,8 @@ import pytest
 
 from pytest_mock import MockerFixture
 
-from stock_analysis_mcp.services.stock_service import get_aroon_down, get_data, get_macd, get_psar_up, get_reddit_stock_news, get_rsi
+
+from stock_analysis_mcp.services.stock_service import get_adx, get_aroon_down, get_data, get_macd, get_psar_up, get_reddit_stock_news, get_rsi
 
 
 @pytest.fixture
@@ -62,6 +63,19 @@ def test_get_rsi(mocker: MockerFixture, mock_df: pd.DataFrame) -> None:
     assert res == [50.0, 55.0]
 
 
+def test_get_adx(mocker: MockerFixture, mock_df: pd.DataFrame) -> None:
+    mocker.patch("stock_analysis_mcp.services.stock_service.get_data", return_value=mock_df)
+    mocker.patch("stock_analysis_mcp.services.stock_service.adx", return_value=pd.Series([25.0, 30.0]))
+
+    res = get_adx("AAPL", "2023-01-01", "2023-01-02")
+    assert len(res) == 2
+    assert res == [25.0, 30.0]
+
+
+def test_get_adx_empty(mocker: MockerFixture) -> None:
+    mocker.patch("stock_analysis_mcp.services.stock_service.get_data", return_value=pd.DataFrame())
+
+    res = get_adx("AAPL", "2023-01-01", "2023-01-02")
 def test_get_psar_up_success(mocker: MockerFixture, mock_df: pd.DataFrame) -> None:
     mocker.patch("stock_analysis_mcp.services.stock_service.get_data", return_value=mock_df)
     mock_psar_class = mocker.patch("ta.trend.PSARIndicator")
