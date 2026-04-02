@@ -10,7 +10,29 @@ A framework-agnostic stock analysis toolkit that works with any LLM agent — Cl
 - **Global Stock Data**: NSE, NYSE, NASDAQ, BSE via `yfinance`
 - **Framework-Agnostic Skills**: Auto-discovered by any SKILL.md-compatible agent
 - **JSON CLI**: All data accessible via command-line with JSON output
-- **Self-Hosted Web UI**: Optional ADK-powered web interface with LiteLLM
+- **Web UI**: ADK-powered web interface with LiteLLM
+
+## Prerequisites
+
+- [Python 3.14+](https://www.python.org/downloads/)
+- [uv](https://docs.astral.sh/uv/) — Python package manager
+- [prek](https://github.com/j178/prek) — Git hook runner (recommended)
+
+```bash
+# macOS
+brew install python@3.14 uv j178/tap/prek
+
+# Linux / WSL
+curl -LsSf https://astral.sh/uv/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/j178/prek/main/install.sh | sh
+
+# Windows (PowerShell)
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+cargo install prek
+
+# Any platform with Rust
+cargo install prek
+```
 
 ## Quick Start
 
@@ -147,13 +169,25 @@ All indicator commands require `--start YYYY-MM-DD --end YYYY-MM-DD`.
 ## Development
 
 ```bash
-make setup      # Install dependencies + prek git hooks
+make setup      # Install dependencies + git hooks
 make test       # Run tests (parallel with pytest-xdist)
 make format     # Format code (ruff)
 make lint       # Lint code (ruff)
 make typecheck  # Type check (mypy + pyrefly)
 make all        # Run everything
 ```
+
+### Git Hooks
+
+Git hooks are managed via [prek](https://github.com/j178/prek) — a fast, Rust-based hook runner. Install it before running `make setup`:
+
+```bash
+brew install j178/tap/prek    # macOS
+# or
+cargo install prek            # any platform with Rust
+```
+
+If prek is not installed, `make setup` will print a warning and skip hook installation.
 
 ## Credits
 
