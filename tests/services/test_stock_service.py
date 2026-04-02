@@ -3,7 +3,7 @@ import pytest
 
 from pytest_mock import MockerFixture
 
-from stock_analysis_mcp.services.stock_service import get_data, get_macd, get_reddit_stock_news, get_rsi
+from stock_analysis_mcp.services.stock_service import get_data, get_macd, get_psar_up, get_reddit_stock_news, get_rsi
 
 
 @pytest.fixture
@@ -60,6 +60,23 @@ def test_get_rsi(mocker: MockerFixture, mock_df: pd.DataFrame) -> None:
     res = get_rsi("AAPL", "2023-01-01", "2023-01-02")
     assert len(res) == 2
     assert res == [50.0, 55.0]
+
+
+def test_get_psar_up_success(mocker: MockerFixture, mock_df: pd.DataFrame) -> None:
+    mocker.patch("stock_analysis_mcp.services.stock_service.get_data", return_value=mock_df)
+    mock_psar_class = mocker.patch("ta.trend.PSARIndicator")
+    mock_psar_instance = mock_psar_class.return_value
+    mock_psar_instance.psar_up.return_value.dropna.return_value.tolist.return_value = [95.0, 96.0]
+
+    res = get_psar_up("AAPL", "2023-01-01", "2023-01-02")
+    assert res == [95.0, 96.0]
+
+
+def test_get_psar_up_empty(mocker: MockerFixture) -> None:
+    mocker.patch("stock_analysis_mcp.services.stock_service.get_data", return_value=pd.DataFrame())
+
+    res = get_psar_up("AAPL", "2023-01-01", "2023-01-02")
+    assert res == []
 
 
 def test_get_reddit_stock_news_exception(mocker: MockerFixture) -> None:
