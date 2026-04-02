@@ -274,15 +274,12 @@ def get_reddit_stock_news(symbol: str, time_filter: str = "month") -> list[dict]
 
 def get_top_comments(post: Submission, limit: int = 3) -> list[dict[str, Any]]:
     """Fetches top comments from a post."""
-    comments: list[dict[str, Any]] = []
     post.comments.replace_more(limit=0)
-    for i in range(min(limit, len(post.comments))):
-        comment = post.comments[i]
-        comments.append(
-            {
-                "author": str(comment.author),
-                "body": comment.body[:500] + "..." if len(comment.body) > 500 else comment.body,
-                "score": comment.score,
-            }
-        )
-    return comments
+    return [
+        {
+            "author": str(getattr(comment, "author", "")),
+            "body": getattr(comment, "body", "")[:500] + "..." if len(getattr(comment, "body", "")) > 500 else getattr(comment, "body", ""),
+            "score": getattr(comment, "score", 0),
+        }
+        for comment in post.comments.list()[:limit]
+    ]
