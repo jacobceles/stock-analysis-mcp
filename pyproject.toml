@@ -2,9 +2,9 @@
 # Project metadata
 # ===============================
 [project]
-name = "adk-stock-analysis-agent"
-version = "0.1.0"
-description = "Google ADK-based stock analysis"
+name = "stock-analysis-skills"
+version = "0.2.0"
+description = "Framework-agnostic stock analysis toolkit with Skills + CLI"
 readme = "README.md"
 requires-python = ">=3.14,<3.15"
 
@@ -12,17 +12,16 @@ requires-python = ">=3.14,<3.15"
 # Dependencies
 # ===============================
 dependencies = [
-    "fastmcp",
     "requests",
     "pandas",
     "ta",
-    "google-generativeai",
-    "google-adk",
     "praw",
-    "litellm",
     "colorlog>=6.10.1",
     "python-json-logger>=4.0.0",
     "yfinance>=1.2.0",
+    "google-generativeai",
+    "google-adk",
+    "litellm",
     "finplot>=1.9.7",
 ]
 
