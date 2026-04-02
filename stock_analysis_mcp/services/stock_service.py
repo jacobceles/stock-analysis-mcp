@@ -39,11 +39,10 @@ def get_equity_metadata(symbol: str) -> dict:
         return {}
 
 
-def get_data(symbol: str, start_date: str, end_date: str) -> pd.DataFrame:
-    """Fetches historical price data for a given symbol using yfinance and caches it."""
-    dump_dir = Path(DUMP_DIR).resolve()
-    dump_dir.mkdir(parents=True, exist_ok=True)
-
+@functools.lru_cache(maxsize=32)
+def _get_data_internal(symbol: str, start_date: str, end_date: str) -> pd.DataFrame:
+    """Internal function to fetch and cache historical price data."""
+    os.makedirs(DUMP_DIR, exist_ok=True)
     file_name = f"{symbol}_{start_date}_{end_date}.csv"
     file_path = (dump_dir / file_name).resolve()
 
@@ -89,7 +88,7 @@ def get_data(symbol: str, start_date: str, end_date: str) -> pd.DataFrame:
 
 
 def get_data(symbol: str, start_date: str, end_date: str) -> pd.DataFrame:
-    """Fetches historical price data for a given symbol using yfinance and caches it."""
+    """Fetches historical price data and returns a copy to prevent shared state issues."""
     return _get_data_internal(symbol, start_date, end_date).copy()
 
 

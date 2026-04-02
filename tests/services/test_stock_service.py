@@ -1,3 +1,4 @@
+from collections.abc import Generator
 from typing import Any
 from unittest.mock import MagicMock
 
@@ -7,7 +8,7 @@ import pytest
 from pytest_mock import MockerFixture
 
 
-from stock_analysis_mcp.services.stock_service import get_equity_metadata, get_adx, get_aroon_down, get_data, get_macd, get_psar_up, get_reddit_stock_news, get_rsi
+from stock_analysis_mcp.services.stock_service import _get_data_internal, get_equity_metadata, get_adx, get_aroon_down, get_data, get_macd, get_psar_up, get_reddit_stock_news, get_rsi
 
 
 @pytest.fixture
@@ -17,9 +18,17 @@ def mock_df() -> pd.DataFrame:
     )
 
 
+@pytest.fixture(autouse=True)
+def clear_cache() -> Generator[None]:
+    _get_data_internal.cache_clear()
+    yield
+    _get_data_internal.cache_clear()
+
+
 def test_get_data_empty(mocker: MockerFixture) -> None:
     # Mock yfinance to return empty DF
     mocker.patch("yfinance.download", return_value=pd.DataFrame())
+    mocker.patch("os.path.exists", return_value=False)
     df = get_data("AAPL", "2023-01-01", "2023-01-02")
     assert df.empty
 
