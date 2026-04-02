@@ -8,12 +8,12 @@ from typing import Any
 
 import pandas as pd
 import praw  # type: ignore
+import ta.trend  # type: ignore
 import yfinance as yf  # type: ignore
 
 from praw.models import Submission  # type: ignore
 from ta.momentum import roc, rsi, stoch, tsi  # type: ignore
-import ta.trend  # type: ignore
-from ta.trend import adx, aroon_down, aroon_up, ema_indicator, ichimoku_a, ichimoku_b, macd, psar_down, psar_up  # type: ignore
+from ta.trend import adx, aroon_down, aroon_up, ema_indicator, ichimoku_a, ichimoku_b, macd, psar_down  # type: ignore
 from ta.volume import chaikin_money_flow, on_balance_volume, volume_weighted_average_price  # type: ignore
 
 from stock_analysis_mcp.core.constants import (
@@ -42,7 +42,8 @@ def get_equity_metadata(symbol: str) -> dict:
 @functools.lru_cache(maxsize=32)
 def _get_data_internal(symbol: str, start_date: str, end_date: str) -> pd.DataFrame:
     """Internal function to fetch and cache historical price data."""
-    os.makedirs(DUMP_DIR, exist_ok=True)
+    dump_dir = Path(DUMP_DIR).resolve()
+    os.makedirs(dump_dir, exist_ok=True)
     file_name = f"{symbol}_{start_date}_{end_date}.csv"
     file_path = (dump_dir / file_name).resolve()
 
@@ -166,7 +167,7 @@ def get_psar_up(symbol: str, start_date: str, end_date: str) -> list[float]:
     df = get_data(symbol, start_date, end_date)
     if df.empty:
         return []
-    psar = ta.trend.PSARIndicator(high=df['High'], low=df['Low'], close=df['Close'])
+    psar = ta.trend.PSARIndicator(high=df["High"], low=df["Low"], close=df["Close"])
     return psar.psar_up().dropna().tolist()
 
 
@@ -294,7 +295,7 @@ def get_top_comments(post: Submission, limit: int = 3) -> list[dict[str, Any]]:
     return [
         {
             "author": str(getattr(comment, "author", "")),
-            "body": getattr(comment, "body", "")[:500] + "..." if len(getattr(comment, "body", "")) > 500 else getattr(comment, "body", ""),
+            "body": _truncate_text(getattr(comment, "body", ""), 500),
             "score": getattr(comment, "score", 0),
         }
         for comment in post.comments.list()[:limit]

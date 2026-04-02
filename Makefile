@@ -4,7 +4,7 @@ all: setup format lint typecheck test
 
 setup:
 	uv sync --all-groups
-	if [ -d .git ]; then uv run pre-commit install; fi
+	if [ -d .git ]; then prek install; fi
 
 format:
 	uv run ruff format

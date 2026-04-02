@@ -7,8 +7,28 @@ import pytest
 
 from pytest_mock import MockerFixture
 
-
-from stock_analysis_mcp.services.stock_service import _get_data_internal, get_equity_metadata, get_adx, get_aroon_down, get_data, get_macd, get_psar_up, get_reddit_stock_news, get_rsi
+from stock_analysis_mcp.services.stock_service import (
+    _get_data_internal,
+    get_adx,
+    get_aroon_down,
+    get_aroon_up,
+    get_chaikin_money_flow,
+    get_data,
+    get_ema,
+    get_equity_metadata,
+    get_ichimoku_a,
+    get_ichimoku_b,
+    get_macd,
+    get_on_balance_volume,
+    get_psar_down,
+    get_psar_up,
+    get_reddit_stock_news,
+    get_roc,
+    get_rsi,
+    get_stoch,
+    get_tsi,
+    get_volume_weighted_average_price,
+)
 
 
 @pytest.fixture
@@ -26,19 +46,27 @@ def clear_cache() -> Generator[None]:
 
 
 def test_get_data_empty(mocker: MockerFixture) -> None:
-    # Mock yfinance to return empty DF
     mocker.patch("yfinance.download", return_value=pd.DataFrame())
-    mocker.patch("os.path.exists", return_value=False)
+    mocker.patch("os.makedirs")
+    mock_path = mocker.patch("stock_analysis_mcp.services.stock_service.Path")
+    mock_resolved = mock_path.return_value.resolve.return_value
+    mock_resolved.__truediv__ = lambda self, other: mocker.MagicMock(resolve=lambda: mocker.MagicMock(is_relative_to=lambda x: True, exists=lambda: False))
+
     df = get_data("AAPL", "2023-01-01", "2023-01-02")
     assert df.empty
 
 
 def test_get_data_success(mocker: MockerFixture, mock_df: pd.DataFrame) -> None:
     mocker.patch("yfinance.download", return_value=mock_df)
-    # Mock os.makedirs and df.to_csv to avoid file I/O
     mocker.patch("os.makedirs")
-    mocker.patch("os.path.exists", return_value=False)
     mocker.patch("pandas.DataFrame.to_csv")
+    mock_path = mocker.patch("stock_analysis_mcp.services.stock_service.Path")
+    mock_resolved = mock_path.return_value.resolve.return_value
+    mock_file_path = mocker.MagicMock()
+    mock_file_path.resolve.return_value = mock_file_path
+    mock_file_path.is_relative_to.return_value = True
+    mock_file_path.exists.return_value = False
+    mock_resolved.__truediv__ = lambda self, other: mock_file_path
 
     df = get_data("AAPL", "2023-01-01", "2023-01-02")
     assert not df.empty
@@ -48,9 +76,14 @@ def test_get_data_success(mocker: MockerFixture, mock_df: pd.DataFrame) -> None:
 
 def test_get_data_exception(mocker: MockerFixture) -> None:
     mocker.patch("yfinance.download", side_effect=Exception("API Error"))
-    # Mock os.makedirs and os.path.exists to reach the yf.download call
     mocker.patch("os.makedirs")
-    mocker.patch("os.path.exists", return_value=False)
+    mock_path = mocker.patch("stock_analysis_mcp.services.stock_service.Path")
+    mock_resolved = mock_path.return_value.resolve.return_value
+    mock_file_path = mocker.MagicMock()
+    mock_file_path.resolve.return_value = mock_file_path
+    mock_file_path.is_relative_to.return_value = True
+    mock_file_path.exists.return_value = False
+    mock_resolved.__truediv__ = lambda self, other: mock_file_path
 
     df = get_data("AAPL", "2023-01-01", "2023-01-02")
     assert df.empty
@@ -88,6 +121,9 @@ def test_get_psar_down_empty_data(mocker: MockerFixture) -> None:
     mocker.patch("stock_analysis_mcp.services.stock_service.get_data", return_value=pd.DataFrame())
 
     res = get_psar_down("AAPL", "2023-01-01", "2023-01-02")
+    assert res == []
+
+
 def test_get_reddit_stock_news_success(mocker: MockerFixture) -> None:
     # Setup mock posts
     mock_post1 = MagicMock()
@@ -176,6 +212,8 @@ def test_get_reddit_stock_news_fetch_subreddit_exception(mocker: MockerFixture) 
     assert len(res) == 1
     assert res[0]["title"] == "Good Post"
     assert res[0]["subreddit"] == "GoodSubreddit"
+
+
 def test_get_equity_metadata_success(mocker: MockerFixture) -> None:
     mock_info = {"shortName": "Apple Inc.", "sector": "Technology"}
 
@@ -193,6 +231,8 @@ def test_get_equity_metadata_exception(mocker: MockerFixture) -> None:
 
     res = get_equity_metadata("INVALID")
     assert res == {}
+
+
 def test_get_adx(mocker: MockerFixture, mock_df: pd.DataFrame) -> None:
     mocker.patch("stock_analysis_mcp.services.stock_service.get_data", return_value=mock_df)
     mocker.patch("stock_analysis_mcp.services.stock_service.adx", return_value=pd.Series([25.0, 30.0]))
@@ -205,7 +245,9 @@ def test_get_adx(mocker: MockerFixture, mock_df: pd.DataFrame) -> None:
 def test_get_adx_empty(mocker: MockerFixture) -> None:
     mocker.patch("stock_analysis_mcp.services.stock_service.get_data", return_value=pd.DataFrame())
 
-    res = get_adx("AAPL", "2023-01-01", "2023-01-02")
+    assert get_adx("AAPL", "2023-01-01", "2023-01-02") == []
+
+
 def test_get_psar_up_success(mocker: MockerFixture, mock_df: pd.DataFrame) -> None:
     mocker.patch("stock_analysis_mcp.services.stock_service.get_data", return_value=mock_df)
     mock_psar_class = mocker.patch("ta.trend.PSARIndicator")
@@ -247,10 +289,8 @@ def test_get_top_comments_success(mocker: MockerFixture) -> None:
     mock_comment2.score = 20
 
     mock_comments_list = [mock_comment1, mock_comment2]
-    # In python magicmock len() is 0 by default. So we need to mock __len__
-    mock_submission.comments.__len__.return_value = len(mock_comments_list)
-    mock_submission.comments.__getitem__.side_effect = lambda i: mock_comments_list[i]
     mock_submission.comments.replace_more = mocker.MagicMock()
+    mock_submission.comments.list.return_value = mock_comments_list
 
     comments = get_top_comments(mock_submission, limit=1)
 
@@ -270,9 +310,8 @@ def test_get_top_comments_exceeds_limit(mocker: MockerFixture) -> None:
     mock_comment1.score = 10
 
     mock_comments_list = [mock_comment1]
-    mock_submission.comments.__len__.return_value = len(mock_comments_list)
-    mock_submission.comments.__getitem__.side_effect = lambda i: mock_comments_list[i]
     mock_submission.comments.replace_more = mocker.MagicMock()
+    mock_submission.comments.list.return_value = mock_comments_list
 
     comments = get_top_comments(mock_submission, limit=3)
 
@@ -288,14 +327,15 @@ def test_get_top_comments_empty(mocker: MockerFixture) -> None:
     mock_submission = mocker.MagicMock()
 
     mock_comments_list: list[Any] = []
-    mock_submission.comments.__len__.return_value = len(mock_comments_list)
-    mock_submission.comments.__getitem__.side_effect = lambda i: mock_comments_list[i]
     mock_submission.comments.replace_more = mocker.MagicMock()
+    mock_submission.comments.list.return_value = mock_comments_list
 
     comments = get_top_comments(mock_submission, limit=3)
 
     mock_submission.comments.replace_more.assert_called_once_with(limit=0)
     assert len(comments) == 0
+
+
 def test_get_aroon_down_empty(mocker: MockerFixture) -> None:
     # Ensure DataFrame is empty but contains required columns to prevent KeyError
     empty_df = pd.DataFrame(columns=["Date", "Open", "High", "Low", "Close", "Adj_Close", "Volume"])
@@ -314,3 +354,116 @@ def test_get_aroon_down(mocker: MockerFixture, mock_df: pd.DataFrame) -> None:
     res = get_aroon_down("AAPL", "2023-01-01", "2023-01-02")
 
     assert res == [50.0, 60.0]
+
+
+# --- Missing indicator tests ---
+
+
+def test_get_tsi(mocker: MockerFixture, mock_df: pd.DataFrame) -> None:
+    mocker.patch("stock_analysis_mcp.services.stock_service.get_data", return_value=mock_df)
+    mocker.patch("stock_analysis_mcp.services.stock_service.tsi", return_value=pd.Series([0.5, 0.6]))
+    assert get_tsi("AAPL", "2023-01-01", "2023-01-02") == [0.5, 0.6]
+
+
+def test_get_tsi_empty(mocker: MockerFixture) -> None:
+    mocker.patch("stock_analysis_mcp.services.stock_service.get_data", return_value=pd.DataFrame())
+    assert get_tsi("AAPL", "2023-01-01", "2023-01-02") == []
+
+
+def test_get_stoch(mocker: MockerFixture, mock_df: pd.DataFrame) -> None:
+    mocker.patch("stock_analysis_mcp.services.stock_service.get_data", return_value=mock_df)
+    mocker.patch("stock_analysis_mcp.services.stock_service.stoch", return_value=pd.Series([80.0, 75.0]))
+    assert get_stoch("AAPL", "2023-01-01", "2023-01-02", 14, 3) == [80.0, 75.0]
+
+
+def test_get_stoch_empty(mocker: MockerFixture) -> None:
+    mocker.patch("stock_analysis_mcp.services.stock_service.get_data", return_value=pd.DataFrame())
+    assert get_stoch("AAPL", "2023-01-01", "2023-01-02", 14, 3) == []
+
+
+def test_get_roc(mocker: MockerFixture, mock_df: pd.DataFrame) -> None:
+    mocker.patch("stock_analysis_mcp.services.stock_service.get_data", return_value=mock_df)
+    mocker.patch("stock_analysis_mcp.services.stock_service.roc", return_value=pd.Series([2.0, 3.0]))
+    assert get_roc("AAPL", "2023-01-01", "2023-01-02", 12) == [2.0, 3.0]
+
+
+def test_get_roc_empty(mocker: MockerFixture) -> None:
+    mocker.patch("stock_analysis_mcp.services.stock_service.get_data", return_value=pd.DataFrame())
+    assert get_roc("AAPL", "2023-01-01", "2023-01-02", 12) == []
+
+
+def test_get_ema(mocker: MockerFixture, mock_df: pd.DataFrame) -> None:
+    mocker.patch("stock_analysis_mcp.services.stock_service.get_data", return_value=mock_df)
+    mocker.patch("stock_analysis_mcp.services.stock_service.ema_indicator", return_value=pd.Series([101.0, 102.0]))
+    assert get_ema("AAPL", "2023-01-01", "2023-01-02", 12) == [101.0, 102.0]
+
+
+def test_get_ema_empty(mocker: MockerFixture) -> None:
+    mocker.patch("stock_analysis_mcp.services.stock_service.get_data", return_value=pd.DataFrame())
+    assert get_ema("AAPL", "2023-01-01", "2023-01-02", 12) == []
+
+
+def test_get_ichimoku_a(mocker: MockerFixture, mock_df: pd.DataFrame) -> None:
+    mocker.patch("stock_analysis_mcp.services.stock_service.get_data", return_value=mock_df)
+    mocker.patch("stock_analysis_mcp.services.stock_service.ichimoku_a", return_value=pd.Series([100.0, 101.0]))
+    assert get_ichimoku_a("AAPL", "2023-01-01", "2023-01-02") == [100.0, 101.0]
+
+
+def test_get_ichimoku_a_empty(mocker: MockerFixture) -> None:
+    mocker.patch("stock_analysis_mcp.services.stock_service.get_data", return_value=pd.DataFrame())
+    assert get_ichimoku_a("AAPL", "2023-01-01", "2023-01-02") == []
+
+
+def test_get_ichimoku_b(mocker: MockerFixture, mock_df: pd.DataFrame) -> None:
+    mocker.patch("stock_analysis_mcp.services.stock_service.get_data", return_value=mock_df)
+    mocker.patch("stock_analysis_mcp.services.stock_service.ichimoku_b", return_value=pd.Series([99.0, 100.0]))
+    assert get_ichimoku_b("AAPL", "2023-01-01", "2023-01-02") == [99.0, 100.0]
+
+
+def test_get_ichimoku_b_empty(mocker: MockerFixture) -> None:
+    mocker.patch("stock_analysis_mcp.services.stock_service.get_data", return_value=pd.DataFrame())
+    assert get_ichimoku_b("AAPL", "2023-01-01", "2023-01-02") == []
+
+
+def test_get_aroon_up(mocker: MockerFixture, mock_df: pd.DataFrame) -> None:
+    mocker.patch("stock_analysis_mcp.services.stock_service.get_data", return_value=mock_df)
+    mocker.patch("stock_analysis_mcp.services.stock_service.aroon_up", return_value=pd.Series([70.0, 80.0]))
+    assert get_aroon_up("AAPL", "2023-01-01", "2023-01-02") == [70.0, 80.0]
+
+
+def test_get_aroon_up_empty(mocker: MockerFixture) -> None:
+    mocker.patch("stock_analysis_mcp.services.stock_service.get_data", return_value=pd.DataFrame())
+    assert get_aroon_up("AAPL", "2023-01-01", "2023-01-02") == []
+
+
+def test_get_on_balance_volume(mocker: MockerFixture, mock_df: pd.DataFrame) -> None:
+    mocker.patch("stock_analysis_mcp.services.stock_service.get_data", return_value=mock_df)
+    mocker.patch("stock_analysis_mcp.services.stock_service.on_balance_volume", return_value=pd.Series([1000.0, 2100.0]))
+    assert get_on_balance_volume("AAPL", "2023-01-01", "2023-01-02") == [1000.0, 2100.0]
+
+
+def test_get_on_balance_volume_empty(mocker: MockerFixture) -> None:
+    mocker.patch("stock_analysis_mcp.services.stock_service.get_data", return_value=pd.DataFrame())
+    assert get_on_balance_volume("AAPL", "2023-01-01", "2023-01-02") == []
+
+
+def test_get_chaikin_money_flow(mocker: MockerFixture, mock_df: pd.DataFrame) -> None:
+    mocker.patch("stock_analysis_mcp.services.stock_service.get_data", return_value=mock_df)
+    mocker.patch("stock_analysis_mcp.services.stock_service.chaikin_money_flow", return_value=pd.Series([0.1, 0.2]))
+    assert get_chaikin_money_flow("AAPL", "2023-01-01", "2023-01-02") == [0.1, 0.2]
+
+
+def test_get_chaikin_money_flow_empty(mocker: MockerFixture) -> None:
+    mocker.patch("stock_analysis_mcp.services.stock_service.get_data", return_value=pd.DataFrame())
+    assert get_chaikin_money_flow("AAPL", "2023-01-01", "2023-01-02") == []
+
+
+def test_get_volume_weighted_average_price(mocker: MockerFixture, mock_df: pd.DataFrame) -> None:
+    mocker.patch("stock_analysis_mcp.services.stock_service.get_data", return_value=mock_df)
+    mocker.patch("stock_analysis_mcp.services.stock_service.volume_weighted_average_price", return_value=pd.Series([100.5, 101.5]))
+    assert get_volume_weighted_average_price("AAPL", "2023-01-01", "2023-01-02") == [100.5, 101.5]
+
+
+def test_get_volume_weighted_average_price_empty(mocker: MockerFixture) -> None:
+    mocker.patch("stock_analysis_mcp.services.stock_service.get_data", return_value=pd.DataFrame())
+    assert get_volume_weighted_average_price("AAPL", "2023-01-01", "2023-01-02") == []

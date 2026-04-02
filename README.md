@@ -66,9 +66,9 @@ Skills are located in `.agents/skills/` and are auto-discovered by compatible ag
 - **Indian stocks (NSE)**: Append `.NS` (e.g., `RELIANCE.NS`, `TCS.NS`)
 - **Indian stocks (BSE)**: Append `.BO` (e.g., `500325.BO`)
 
-## Self-Hosted Web UI (Optional)
+## Web UI
 
-Run your own web-based stock analysis agent powered by LiteLLM.
+Run the built-in web-based stock analysis agent powered by LiteLLM.
 
 ### 1. Configure environment
 
@@ -138,8 +138,8 @@ All indicator commands require `--start YYYY-MM-DD --end YYYY-MM-DD`.
 | `REDDIT_CLIENT_ID` | Reddit sentiment | — |
 | `REDDIT_CLIENT_SECRET` | Reddit sentiment | — |
 | `REDDIT_USER_AGENT` | Reddit sentiment | `stock-analysis-mcp/1.0` |
-| `LITE_LLM_MODEL` | Self-hosted Web UI | — |
-| `LITE_LLM_API_KEY` | Self-hosted Web UI | — |
+| `LITE_LLM_MODEL` | Web UI | — |
+| `LITE_LLM_API_KEY` | Web UI | — |
 | `HOST` | Server binding | `127.0.0.1` |
 | `PORT` | Server port | `8080` |
 | `LOG_FORMAT` | Logging style | `json` (`color` for dev) |
@@ -147,7 +147,7 @@ All indicator commands require `--start YYYY-MM-DD --end YYYY-MM-DD`.
 ## Development
 
 ```bash
-make setup      # Install dependencies + pre-commit hooks
+make setup      # Install dependencies + prek git hooks
 make test       # Run tests (parallel with pytest-xdist)
 make format     # Format code (ruff)
 make lint       # Lint code (ruff)
