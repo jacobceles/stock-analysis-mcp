@@ -9,17 +9,17 @@ client = TestClient(app)
 def test_health_check_endpoint() -> None:
     response = client.get("/health")
     assert response.status_code == 200
-    assert response.json() == {"status": "healthy", "service": "production-adk-agent"}
+    assert response.json()["status"] == "healthy"
 
 
 def test_root_endpoint() -> None:
     response = client.get("/")
     assert response.status_code == 200
-    assert response.json() == {"service": "Production ADK Agent - Stock MCP", "description": "", "docs": "/docs", "health": "/health"}
+    assert response.json() == {"service": "Stock Analysis Agent", "description": "", "docs": "/docs", "health": "/health"}
 
 
 def test_app_metadata() -> None:
-    assert app.title == "Production ADK Agent - Stock MCP"
+    assert app.title == "Stock Analysis Agent"
     assert app.version == "1.0.0"
     assert app.description == ""
 

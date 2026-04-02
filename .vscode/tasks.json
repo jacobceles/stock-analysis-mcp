@@ -4,7 +4,7 @@
         {
             "label": "Setup Environment",
             "type": "shell",
-            "command": "uv sync --all-packages && if [ -d .git ]; then uv run pre-commit install; fi",
+            "command": "uv sync --all-groups && if [ -d .git ]; then uv run pre-commit install; fi",
             "problemMatcher": [],
             "group": "build"
         },
