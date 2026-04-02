@@ -66,6 +66,19 @@ def test_get_rsi(mocker: MockerFixture, mock_df: pd.DataFrame) -> None:
     assert res == [50.0, 55.0]
 
 
+def test_get_psar_down_success(mocker: MockerFixture, mock_df: pd.DataFrame) -> None:
+    mocker.patch("stock_analysis_mcp.services.stock_service.get_data", return_value=mock_df)
+    mocker.patch("stock_analysis_mcp.services.stock_service.psar_down", return_value=pd.Series([10.0, 11.0]))
+
+    res = get_psar_down("AAPL", "2023-01-01", "2023-01-02")
+    assert len(res) == 2
+    assert res == [10.0, 11.0]
+
+
+def test_get_psar_down_empty_data(mocker: MockerFixture) -> None:
+    mocker.patch("stock_analysis_mcp.services.stock_service.get_data", return_value=pd.DataFrame())
+
+    res = get_psar_down("AAPL", "2023-01-01", "2023-01-02")
 def test_get_reddit_stock_news_success(mocker: MockerFixture) -> None:
     # Setup mock posts
     mock_post1 = MagicMock()
