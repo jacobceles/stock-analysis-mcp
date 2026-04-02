@@ -2,16 +2,17 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python: FastMCP Server",
+            "name": "Python: CLI",
             "type": "debugpy",
             "request": "launch",
-            "module": "stock_analysis_mcp.api.mcp_server",
+            "module": "stock_analysis_mcp",
+            "args": ["rsi", "AAPL", "--start", "2025-01-01", "--end", "2025-03-31"],
             "envFile": "${workspaceFolder}/.env",
             "justMyCode": true,
             "console": "integratedTerminal"
         },
         {
-            "name": "Python: ADK Service",
+            "name": "Python: ADK Web UI",
             "type": "debugpy",
             "request": "launch",
             "module": "stock_analysis_mcp.api.adk_server",
