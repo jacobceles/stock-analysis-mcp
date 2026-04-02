@@ -3,7 +3,7 @@ import pytest
 
 from pytest_mock import MockerFixture
 
-from stock_analysis_mcp.services.stock_service import get_data, get_macd, get_psar_up, get_reddit_stock_news, get_rsi
+from stock_analysis_mcp.services.stock_service import get_aroon_down, get_data, get_macd, get_psar_up, get_reddit_stock_news, get_rsi
 
 
 @pytest.fixture
@@ -87,3 +87,23 @@ def test_get_reddit_stock_news_exception(mocker: MockerFixture) -> None:
 
     assert len(res) == 1
     assert res[0]["message"] == "Error fetching Reddit posts for AAPL: Mocked error"
+
+
+def test_get_aroon_down_empty(mocker: MockerFixture) -> None:
+    # Ensure DataFrame is empty but contains required columns to prevent KeyError
+    empty_df = pd.DataFrame(columns=["Date", "Open", "High", "Low", "Close", "Adj_Close", "Volume"])
+    mocker.patch("stock_analysis_mcp.services.stock_service.get_data", return_value=empty_df)
+
+    res = get_aroon_down("AAPL", "2023-01-01", "2023-01-02")
+    assert res == []
+
+
+def test_get_aroon_down(mocker: MockerFixture, mock_df: pd.DataFrame) -> None:
+    mocker.patch("stock_analysis_mcp.services.stock_service.get_data", return_value=mock_df)
+
+    # Mock the aroon_down imported function
+    mocker.patch("stock_analysis_mcp.services.stock_service.aroon_down", return_value=pd.Series([50.0, 60.0]))
+
+    res = get_aroon_down("AAPL", "2023-01-01", "2023-01-02")
+
+    assert res == [50.0, 60.0]
