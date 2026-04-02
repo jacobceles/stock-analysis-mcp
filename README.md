@@ -1,107 +1,162 @@
-# Stock Analysis MCP Server
+# Stock Analysis Skills
 
-This project provides an MCP (Model Context Protocol) server and an ADK-based agent platform for performing advanced technical analysis and Reddit sentiment analysis on Global stocks (India, USA, etc.) using `yfinance`.
+A framework-agnostic stock analysis toolkit that works with any LLM agent — Claude Code, Cursor, Copilot, Codex, OpenClaw, ADK, or any tool that supports [SKILL.md](https://agentskills.io/specification).
 
 ## Features
 
-- **OHLC Candlestick Charts**: Generates professional candlestick plots using `finplot` for better technical visualization.
-- **Technical Indicators**: MACD, RSI, TSI, EMA, ROC, Stochastic Oscillator, Ichimoku Cloud, ADX, Parabolic SAR, Aroon.
-- **Global Stock Data**: Integrated with `yfinance` to support NSE, NYSE, NASDAQ, etc.
-- **Reddit Sentiment Analysis**: Extracts recent stock news and discussions from Reddit.
-- **Volume Metrics**: On-Balance Volume (OBV), Chaikin Money Flow (CMF), VWAP.
-- **ADK Integration**: A built-in agent that leverages LiteLLM to interpret data, generate technical plots, and provide trading insights.
-- **Parallel Testing**: Automated test suite with `pytest-xdist` for fast parallel execution.
+- **Technical Indicators**: MACD, RSI, TSI, EMA, ROC, Stochastic Oscillator, Ichimoku Cloud, ADX, Parabolic SAR, Aroon
+- **Volume Metrics**: On-Balance Volume (OBV), Chaikin Money Flow (CMF), VWAP
+- **Reddit Sentiment**: Stock news and discussions from Reddit
+- **Global Stock Data**: NSE, NYSE, NASDAQ, BSE via `yfinance`
+- **Framework-Agnostic Skills**: Auto-discovered by any SKILL.md-compatible agent
+- **JSON CLI**: All data accessible via command-line with JSON output
+- **Self-Hosted Web UI**: Optional ADK-powered web interface with LiteLLM
 
-## Project Structure
+## Quick Start
 
-The project is organized into logical sub-packages for better maintainability:
+### 1. Setup
 
-- **`stock_analysis_mcp/api/`**: Service entry points (MCP and ADK servers).
-- **`stock_analysis_mcp/services/`**: Core business logic, `yfinance` integration, and indicator calculations.
-- **`stock_analysis_mcp/core/`**: Shared configurations, constants, and logging setup.
-- **`stock_analysis_mcp/agent/`**: LLM agent definitions, prompts, and specialized tools.
+```bash
+make setup
+```
 
-## Architecture
+### 2. Use the CLI
 
-The project is structured as a suite of microservices:
-1. **MCP Server**: The backend FastMCP server handling standard tools and API integrations (`mcp.dockerfile`).
-2. **ADK Service**: The intelligent agent interface (`adk.dockerfile`) capable of complex reasoning and plotting.
-3. **yfinance**: External library for fetching historical and real-time market data.
+```bash
+# Stock metadata
+uv run python -m stock_analysis_mcp metadata AAPL
 
----
+# Technical indicators
+uv run python -m stock_analysis_mcp rsi AAPL --start 2025-01-01 --end 2025-03-31
+uv run python -m stock_analysis_mcp macd RELIANCE.NS --start 2025-01-01 --end 2025-03-31
 
-## Prerequisites
+# Reddit sentiment (requires REDDIT_CLIENT_ID/SECRET env vars)
+uv run python -m stock_analysis_mcp reddit AAPL --time-filter week
 
-- [Docker](https://docs.docker.com/get-docker/) and [Docker Compose](https://docs.docker.com/compose/install/)
-- [uv](https://docs.astral.sh/uv/) (Python package manager for Python 3.14)
+# Math calculations
+uv run python -m stock_analysis_mcp calc "100 * 1.05 ** 5"
+```
 
-## Local Development Setup
+All commands output JSON to stdout.
 
-We use VS Code's integrated Tasks and a `Makefile` to streamline development workflows. You can run these commands from the command palette (`CMD+Shift+P` -> `Tasks: Run Task`) or directly from your terminal using `make`.
+## Using with LLM Agents
 
-1. **Set up the environment:**
-   Create a `.env` file in the project root. Some features require specific keys. You can find a sample in `.env.sample`.
+Skills are located in `.agents/skills/` and are auto-discovered by compatible agents.
 
-   **Required for the ADK Agent (LLM routing):**
-   - `LITE_LLM_MODEL`: The LiteLLM model string (e.g., `gemini/gemini-2.5-flash`).
-   - `LITE_LLM_API_KEY`: The API key for the respective model.
+| Agent/Framework | How It Works |
+|---|---|
+| Claude Code | Discovers `.agents/skills/`, runs CLI via Bash |
+| Cursor | Discovers `.agents/skills/`, runs CLI via terminal |
+| Copilot | Discovers `.agents/skills/`, runs CLI via terminal |
+| Codex | Discovers `.agents/skills/`, runs CLI via shell |
+| OpenClaw | Loads skills, runs CLI via shell execution |
+| Google ADK | Discovers `.agents/skills/` via SkillToolset |
 
-   **Optional (Required ONLY for Reddit Sentiment Analysis):**
-   - `REDDIT_CLIENT_ID`: Your Reddit App client ID.
-   - `REDDIT_CLIENT_SECRET`: Your Reddit App client secret.
-   *To get Reddit API credentials, visit [Reddit Apps](https://www.reddit.com/prefs/apps) and create a "script" application.*
+### Available Skills
 
-   **Optional Configuration Variables:**
-   - `HOST`: Host address for the servers (defaults to `127.0.0.1`).
-   - `PORT`: Port for the ADK web interface (defaults to `8080`).
-   - `MCP_URL`: Target URL for the MCP Tool (defaults to `http://mcp:8000/sse` in docker).
-   - `GOOGLE_API_KEY`: API key for Google services (if using Gemini models via ADK).
-   - `REDDIT_USER_AGENT`: User agent for Reddit requests (defaults to `stock-analysis-mcp/1.0`).
-   - `LOG_FORMAT`: Set to `color` for human-readable console logs, otherwise defaults to `json`.
+| Skill | Description |
+|---|---|
+| `stock-analysis` | Full technical analysis with BUY/SELL/HOLD recommendation |
+| `stock-sentiment` | Reddit sentiment analysis for a stock |
+| `stock-compare` | Side-by-side comparison of multiple stocks |
 
-2. **Bootstrap the project:**
-   This command installs all dependencies via `uv` and sets up `pre-commit` hooks.
-   - **VS Code Task**: `Setup Environment`
-   - **Terminal**: `make setup`
+### Ticker Format
 
-3. **Build and start the services:**
-   We use a single consolidated `docker/compose.yml` for our microservices deployment.
-   - **VS Code Task**: `Docker: Build Images` or `make docker-build`
-   - **VS Code Task**: `Docker: Start Services` or `make docker-up`
-   
-   Once running:
-   - The **MCP Server** will be available on port `8000`.
-   - The **ADK Web UI** will be available on port `8080`.
-   - To monitor startup logs, run the task `Docker: Tail Logs` or `make docker-logs`.
+- **US stocks**: Standard tickers (e.g., `AAPL`, `MSFT`, `TSLA`)
+- **Indian stocks (NSE)**: Append `.NS` (e.g., `RELIANCE.NS`, `TCS.NS`)
+- **Indian stocks (BSE)**: Append `.BO` (e.g., `500325.BO`)
 
-4. **Tear down:**
-   - **VS Code Task**: `Docker: Stop Services` or `make docker-down`
+## Self-Hosted Web UI (Optional)
 
-## Sample Usage
+Run your own web-based stock analysis agent powered by LiteLLM.
 
-Once the ADK Web UI is running, try asking:
+### 1. Configure environment
+
+Create a `.env` file (see `.env.sample`):
+
+```bash
+LITE_LLM_MODEL=gemini/gemini-2.5-flash
+LITE_LLM_API_KEY=your-api-key
+```
+
+### 2. Run
+
+**Local:**
+```bash
+uv run python -m stock_analysis_mcp.api.adk_server
+```
+
+**Docker:**
+```bash
+make docker-build
+make docker-up
+```
+
+Once running, open the Web UI at **http://localhost:8080/dev-ui/** and select `stock_ta_assistant` from the agent dropdown.
+
+### Sample Prompts
 
 > Analyze the technical indicators for RELIANCE.NS over the last month and show me a candlestick chart.
->
+
 > Analyze the technical indicators for AAPL over the last month and plot the RSI alongside price action.
+
+> What's the Reddit sentiment for TCS.NS this week?
 
 *Note: For Indian stocks, append `.NS` for NSE or `.BO` for BSE (e.g., `RELIANCE.NS`). US stocks use standard tickers (e.g., `AAPL`).*
 
-## Code Quality & Testing
+## CLI Reference
 
-The project requires `ruff` for formatting and linting, and `mypy`/`pyrefly` for strict type checking. It also includes a comprehensive test suite using `pytest-xdist` for parallel execution.
+All indicator commands require `--start YYYY-MM-DD --end YYYY-MM-DD`.
 
-- **Run Tests**: Task `Run Tests` or `make test`
-- **Format your code**: Task `Format Code` or `make format`
-- **Run Linters**: Task `Lint Code (Ruff)` or `make lint`
-- **Run Type Checks**: Task `Typecheck (Mypy & Pyrefly)` or `make typecheck`
-- **Run All Checks**: `make all` (runs setup, format, lint, typecheck, and test)
+| Command | Description | Extra Options |
+|---|---|---|
+| `metadata <SYMBOL>` | Company info (PE, sector, etc.) | — |
+| `history <SYMBOL>` | Historical OHLCV data | — |
+| `macd <SYMBOL>` | MACD | — |
+| `rsi <SYMBOL>` | Relative Strength Index | — |
+| `tsi <SYMBOL>` | True Strength Index | — |
+| `stoch <SYMBOL>` | Stochastic Oscillator | `--window`, `--smooth-window` |
+| `roc <SYMBOL>` | Rate of Change | `--window` |
+| `ema <SYMBOL>` | Exponential Moving Average | `--window` |
+| `ichimoku-a <SYMBOL>` | Ichimoku Cloud A | — |
+| `ichimoku-b <SYMBOL>` | Ichimoku Cloud B | — |
+| `adx <SYMBOL>` | Average Directional Index | — |
+| `psar-up <SYMBOL>` | Parabolic SAR (uptrend) | — |
+| `psar-down <SYMBOL>` | Parabolic SAR (downtrend) | — |
+| `aroon-up <SYMBOL>` | Aroon Up | — |
+| `aroon-down <SYMBOL>` | Aroon Down | — |
+| `obv <SYMBOL>` | On-Balance Volume | — |
+| `cmf <SYMBOL>` | Chaikin Money Flow | — |
+| `vwap <SYMBOL>` | VWAP | — |
+| `reddit <SYMBOL>` | Reddit sentiment | `--time-filter` (hour/day/week/month/year/all) |
+| `calc <EQUATION>` | Math expression evaluator | — |
 
-The tests are also integrated into the **pre-commit** workflow and will run automatically on every commit.
+## Environment Variables
+
+| Variable | Required For | Default |
+|---|---|---|
+| `REDDIT_CLIENT_ID` | Reddit sentiment | — |
+| `REDDIT_CLIENT_SECRET` | Reddit sentiment | — |
+| `REDDIT_USER_AGENT` | Reddit sentiment | `stock-analysis-mcp/1.0` |
+| `LITE_LLM_MODEL` | Self-hosted Web UI | — |
+| `LITE_LLM_API_KEY` | Self-hosted Web UI | — |
+| `HOST` | Server binding | `127.0.0.1` |
+| `PORT` | Server port | `8080` |
+| `LOG_FORMAT` | Logging style | `json` (`color` for dev) |
+
+## Development
+
+```bash
+make setup      # Install dependencies + pre-commit hooks
+make test       # Run tests (parallel with pytest-xdist)
+make format     # Format code (ruff)
+make lint       # Lint code (ruff)
+make typecheck  # Type check (mypy + pyrefly)
+make all        # Run everything
+```
 
 ## Credits
 
-This project uses the following repositories and libraries:
 - [yfinance](https://github.com/ranaroussi/yfinance) for market data
-- [PRAW (Python Reddit API Wrapper)](https://github.com/praw-dev/praw) for Reddit integration
-- [finplot](https://github.com/highfestiva/finplot) for professional financial charting
+- [PRAW](https://github.com/praw-dev/praw) for Reddit integration
+- [ta](https://github.com/bukosabino/ta) for technical analysis indicators
